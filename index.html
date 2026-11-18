@@ -394,6 +394,7 @@ button{font-family:inherit}
     <div class="guest-room" id="guestRoomCodeDisplay">—</div>
     <p>برای ورود امن به کلاس مستقیم، ابتدا با حساب Lroom وارد شوید یا ثبت‌نام کنید.<br>پس از ورود، به همین کلاس هدایت می‌شوید.</p>
     <input type="text" id="guestNameInput" placeholder="نام و نام خانوادگی" maxlength="40" autocomplete="name" />
+    <div id="guestJoinError" role="alert" style="display:none;color:#ff8a80;font-size:13px;line-height:1.7;margin:0 0 10px;"></div>
     <button class="primary" id="guestJoinBtn" onclick="submitGuestJoin()">🚀 ورود به اتاق انتظار</button>
     <div class="back-link" onclick="cancelGuestJoin()">← بازگشت به صفحه اصلی</div>
   </div>
@@ -909,7 +910,7 @@ function getP2PIceServers() {
     return servers;
 }
 async function loadP2PTurnConfig() {
-    if (window.LROOM_TURN_CONFIG || isGuestMode || !sb) return;
+    if (window.LROOM_TURN_CONFIG || !sb) return;
     try {
         const { data, error } = await sb.auth.getSession();
         const accessToken = data?.session?.access_token;
@@ -1001,6 +1002,9 @@ const lroomStorage = (() => {
 let currentTheme = lroomStorage.getItem('lroom_theme') || 'dark';
 let waitingList = new Map();
 let isWaitingForApproval = false;
+let studentApprovalTimer = null;
+let studentApprovalPollBusy = false;
+let teacherWaitingTimer = null;
 let pendingPermissionRequest = null;
 let waitingAudioBlockInterval = null;
 let isGuestMode = false;
@@ -1605,6 +1609,7 @@ async function handleRegister(e) {
             subscriptionEnd: profile.subscription_end
         };
         isGuestMode = false;
+        guestName = '';
 
         let giftText = '';
         if (discCode) {
@@ -1679,6 +1684,7 @@ async function handleLogin(e) {
             subscriptionEnd: profile.subscription_end
         };
         isGuestMode = false;
+        guestName = '';
         await redeemPendingGiftCode();
         checkAndShow();
         try { await loadLroomClassFeatures(); }
@@ -1833,10 +1839,24 @@ function makeRoomCode(length = 10) {
     return Array.from(bytes, value => alphabet[value % alphabet.length]).join('');
 }
 
+async function ensureRoomInvitationRecord(code) {
+    if (!currentUser || isGuestMode || !sb) throw new Error('فقط حساب مدرس می‌تواند لینک کلاس بسازد.');
+    const { error } = await sb.from('lroom_rooms').upsert({
+        room_code: code,
+        owner_id: currentUser.id,
+        is_active: true,
+        updated_at: new Date().toISOString()
+    }, { onConflict: 'room_code' });
+    if (error) throw new Error('فعال‌سازی لینک کلاس ناموفق بود: ' + error.message);
+}
+
 async function ensureSessionCode() {
     if (!currentUser || isGuestMode) return null;
     const existing = String(currentUser.sessionCode || '').toUpperCase();
-    if (/^[A-Z0-9]{8,12}$/.test(existing)) return existing;
+    if (/^[A-Z0-9]{8,12}$/.test(existing)) {
+        await ensureRoomInvitationRecord(existing);
+        return existing;
+    }
     for (let attempt = 0; attempt < 12; attempt++) {
         const code = makeRoomCode(10);
         const { data, error } = await sb.from('profiles')
@@ -1846,6 +1866,7 @@ async function ensureSessionCode() {
             .single();
         if (!error && data?.session_code) {
             currentUser.sessionCode = data.session_code;
+            await ensureRoomInvitationRecord(data.session_code);
             return data.session_code;
         }
         if (error?.code === '23505') continue;
@@ -1953,33 +1974,105 @@ function showGuestJoinScreen(roomCode) {
     });
     const gs = document.getElementById('guestJoinScreen');
     if (gs) gs.style.display = 'flex';
-    document.getElementById('guestRoomCodeDisplay').textContent = roomCode;
+    const codeEl = document.getElementById('guestRoomCodeDisplay');
+    if (codeEl) codeEl.textContent = roomCode;
     const savedName = lroomStorage.getItem('lroom_guest_name') || '';
-    if (savedName) document.getElementById('guestNameInput').value = savedName;
-    setTimeout(() => document.getElementById('guestNameInput').focus(), 200);
-    const inp = document.getElementById('guestNameInput');
-    inp.onkeypress = (e) => { if (e.key === 'Enter') submitGuestJoin(); };
+    const input = document.getElementById('guestNameInput');
+    if (input && !input.value) input.value = savedName;
+    const error = document.getElementById('guestJoinError');
+    if (error) { error.textContent = ''; error.style.display = 'none'; }
+    setTimeout(() => input?.focus(), 200);
+    if (input) input.onkeydown = event => { if (event.key === 'Enter') submitGuestJoin(); };
 }
 function cancelGuestJoin() {
     const u = new URL(location.href);
     u.searchParams.delete('room');
     u.searchParams.delete('join');
-    location.href = u.toString();
+    if (isGuestMode && sb) {
+        sb.auth.signOut().finally(() => { location.href = u.toString(); });
+    } else {
+        location.href = u.toString();
+    }
 }
 async function submitGuestJoin() {
-    const roomCode = String(new URLSearchParams(location.search).get('room') || '').toUpperCase();
-    if (!/^[A-Z0-9]{8,12}$/.test(roomCode)) return showToast('❌ لینک یا کد کلاس معتبر نیست');
-    // P2P room signaling is private and tied to authenticated Supabase users.
-    // Keep the invitation URL so the user is sent to the requested class after signing in.
-    lroomStorage.setItem('lroom_pending_room', roomCode);
-    isGuestMode = false;
-    guestName = '';
-    currentUser = null;
-    const guestScreen = document.getElementById('guestJoinScreen');
-    if (guestScreen) guestScreen.style.display = 'none';
-    const auth = document.getElementById('authScreen');
-    if (auth) auth.style.display = 'flex';
-    showToast('برای ورود امن به کلاس، ابتدا وارد حساب Lroom شوید یا ثبت‌نام کنید.');
+    const params = new URLSearchParams(location.search);
+    const roomCode = String(params.get('room') || lroomStorage.getItem('lroom_pending_room') || '').trim().toUpperCase();
+    const input = document.getElementById('guestNameInput');
+    const button = document.getElementById('guestJoinBtn');
+    const errorEl = document.getElementById('guestJoinError');
+    const name = sanitizeName(input?.value || '');
+    const showError = message => {
+        if (errorEl) { errorEl.textContent = message; errorEl.style.display = 'block'; }
+        else showToast(message);
+    };
+    if (!/^[A-Z0-9]{8,12}$/.test(roomCode)) return showError('لینک یا کد کلاس معتبر نیست.');
+    if (name.length < 2) { showError('لطفاً نام خود را وارد کنید.'); input?.focus(); return; }
+
+    if (button) { button.disabled = true; button.textContent = '⏳ در حال اتصال...'; }
+    if (errorEl) { errorEl.textContent = ''; errorEl.style.display = 'none'; }
+    try {
+        await ensureSupabaseClient();
+        const { data: sessionData, error: sessionError } = await sb.auth.getSession();
+        if (sessionError) throw sessionError;
+        let authUser = sessionData?.session?.user || null;
+
+        // Invite links use Supabase anonymous auth: no email, password or registration screen.
+        if (!authUser) {
+            const { data, error } = await sb.auth.signInAnonymously({ options: { data: { name } } });
+            if (error) {
+                if (/anonymous|disabled|not enabled/i.test(error.message || '')) {
+                    throw new Error('ورود مهمان هنوز در Supabase فعال نشده است. در Authentication → Sign In / Providers، گزینهٔ Anonymous Sign-Ins را فعال کنید.');
+                }
+                throw error;
+            }
+            authUser = data?.user;
+        } else if (authUser.is_anonymous) {
+            const { data, error } = await sb.auth.updateUser({ data: { name } });
+            if (!error && data?.user) authUser = data.user;
+        }
+        if (!authUser?.id) throw new Error('ساخت نشست مهمان ناموفق بود. دوباره تلاش کنید.');
+
+        guestName = name;
+        lroomStorage.setItem('lroom_guest_name', name);
+        lroomStorage.setItem('lroom_pending_room', roomCode);
+        if (authUser.is_anonymous) {
+            currentUser = {
+                id: authUser.id,
+                email: '',
+                name,
+                role: 'guest',
+                sessionCode: null,
+                subscriptionEnd: null
+            };
+            isGuestMode = true;
+        } else {
+            const profile = await ensureLroomProfile(authUser);
+            currentUser = {
+                id: profile.id,
+                email: profile.email || authUser.email || '',
+                name,
+                role: profile.role || 'user',
+                sessionCode: profile.session_code || null,
+                subscriptionEnd: profile.subscription_end
+            };
+            isGuestMode = false;
+        }
+
+        selectedLobbyRole = 'student';
+        const joinInput = document.getElementById('joinRoomCode');
+        if (joinInput) joinInput.value = roomCode;
+        await loadLroomClassFeatures();
+        const guestScreen = document.getElementById('guestJoinScreen');
+        if (guestScreen) guestScreen.style.display = 'none';
+        selectedLobbyRole = 'student';
+        setLobbyRole('student');
+        await joinMeeting();
+    } catch (error) {
+        console.error('[Lroom guest invite]', error);
+        showError('❌ ' + (error?.message || 'ورود به کلاس ناموفق بود.'));
+    } finally {
+        if (button) { button.disabled = false; button.textContent = '🚀 ورود به اتاق انتظار'; }
+    }
 }
 
 // ── Lazy classroom module: loaded only after a valid Supabase session exists. ──
@@ -2056,6 +2149,9 @@ async function bootLroomAuthOnly() {
     const meetingThemeButton = document.getElementById('themeToggleMeeting');
     if (meetingThemeButton) meetingThemeButton.textContent = themeIcon;
 
+    const params = new URLSearchParams(location.search);
+    const inviteRoom = String(params.get('room') || '').trim().toUpperCase();
+    const isInviteLink = params.get('join') === '1' && /^[A-Z0-9]{8,12}$/.test(inviteRoom);
     try {
         await ensureSupabaseClient();
         const sessionResult = await Promise.race([
@@ -2064,6 +2160,27 @@ async function bootLroomAuthOnly() {
         ]);
         const session = sessionResult?.data?.session;
         if (!session?.user) {
+            if (isInviteLink) { showGuestJoinScreen(inviteRoom); return; }
+            const auth = document.getElementById('authScreen');
+            if (auth) auth.style.display = 'flex';
+            return;
+        }
+
+        if (session.user.is_anonymous) {
+            if (isInviteLink) {
+                currentUser = {
+                    id: session.user.id,
+                    email: '',
+                    name: session.user.user_metadata?.name || lroomStorage.getItem('lroom_guest_name') || 'مهمان',
+                    role: 'guest',
+                    sessionCode: null,
+                    subscriptionEnd: null
+                };
+                isGuestMode = true;
+                showGuestJoinScreen(inviteRoom);
+                return;
+            }
+            try { await sb.auth.signOut(); } catch (e) {}
             const auth = document.getElementById('authScreen');
             if (auth) auth.style.display = 'flex';
             return;
@@ -2079,6 +2196,10 @@ async function bootLroomAuthOnly() {
             subscriptionEnd: profile.subscription_end
         };
         isGuestMode = false;
+        if (isInviteLink) {
+            showGuestJoinScreen(inviteRoom);
+            return;
+        }
         try { await redeemPendingGiftCode(); } catch (error) { console.warn('[Lroom pending gift]', error); }
         checkAndShow();
         try { await loadLroomClassFeatures(); }
@@ -2101,9 +2222,10 @@ document.addEventListener('DOMContentLoaded', bootLroomAuthOnly, { once: true })
 
 // JOIN
 async function joinMeeting() {
-    if (!currentUser || isGuestMode) return showToast('برای ورود امن P2P ابتدا وارد حساب کاربری شوید.');
-    if (roomChannel) return showToast('شما هم‌اکنون داخل یک کلاس هستید.');
-    if (currentUser.role !== 'admin') {
+    if (!currentUser) return showToast('ابتدا وارد Lroom شوید یا از لینک دعوت نام خود را وارد کنید.');
+    if (isGuestMode && selectedLobbyRole !== 'student') return showToast('حساب مهمان فقط می‌تواند به‌عنوان دانشجو وارد شود.');
+    if (roomChannel || isWaitingForApproval) return showToast('درخواست ورود شما در حال انجام است.');
+    if (!isGuestMode && currentUser.role !== 'admin') {
         const end = parseDateSafe(currentUser.subscriptionEnd);
         if (end && end.getTime() < Date.now()) {
             showToast('⛔ اعتبار شما تمام شده است.');
@@ -2112,7 +2234,7 @@ async function joinMeeting() {
         }
     }
 
-    myName = sanitizeName(currentUser.name) || 'کاربر';
+    myName = sanitizeName(guestName || currentUser.name) || 'کاربر';
     myRole = selectedLobbyRole;
     if (!['teacher', 'student'].includes(myRole)) return showToast('نقش ورود معتبر نیست.');
 
@@ -2122,15 +2244,13 @@ async function joinMeeting() {
 
     try {
         if (myRole === 'teacher') {
+            if (isGuestMode) throw new Error('مهمان اجازهٔ ساخت کلاس ندارد.');
             roomId = String(await ensureSessionCode() || '').toUpperCase();
         } else {
-            roomId = sanitize(document.getElementById('joinRoomCode')?.value || '').toUpperCase();
+            const urlRoom = new URLSearchParams(location.search).get('room');
+            roomId = sanitize(urlRoom || document.getElementById('joinRoomCode')?.value || '').toUpperCase();
         }
         if (!/^[A-Z0-9]{8,12}$/.test(roomId)) throw new Error('کد کلاس معتبر نیست. کد باید ۸ تا ۱۲ حرف یا عدد داشته باشد.');
-
-        const permOk = await requestMediaPermission();
-        if (!permOk || !localStream || !localStream.getTracks().length) throw new Error('دسترسی میکروفون یا دوربین فراهم نشد.');
-        if (typeof RTCPeerConnection !== 'function') throw new Error('این مرورگر از WebRTC پشتیبانی نمی‌کند.');
 
         const clientToken = (crypto.randomUUID ? crypto.randomUUID() : makeRoomCode(24)).replace(/[^a-zA-Z0-9-]/g, '');
         myId = `${myRole}-${clientToken}`;
@@ -2140,50 +2260,75 @@ async function joinMeeting() {
         p2pRoomRoster.clear();
         remoteParticipants.clear();
 
-        if (myRole === 'teacher') {
-            const { error: roomError } = await sb.from('lroom_rooms').upsert({
+        if (myRole === 'student') {
+            // A student is recorded as PENDING only. They are not put in the participant roster
+            // and do not join Realtime/P2P until the teacher explicitly admits them.
+            const { error: cleanupError } = await sb.from('lroom_room_members').delete()
+                .eq('room_code', roomId).eq('user_id', currentUser.id);
+            if (cleanupError) throw new Error('پاک‌سازی درخواست قبلی ناموفق بود: ' + cleanupError.message);
+            const { error: requestError } = await sb.from('lroom_room_members').insert({
                 room_code: roomId,
-                owner_id: currentUser.id,
-                is_active: true,
-                updated_at: new Date().toISOString()
-            }, { onConflict: 'room_code' });
-            if (roomError) throw new Error('ساخت اتاق ناموفق بود: ' + roomError.message);
-            const { error: staleMembersError } = await sb.from('lroom_room_members').delete().eq('room_code', roomId);
-            if (staleMembersError) throw new Error('پاک‌سازی نشست قبلی ناموفق بود: ' + staleMembersError.message);
+                client_id: myId,
+                user_id: currentUser.id,
+                display_name: myName,
+                role: 'student',
+                status: 'pending'
+            });
+            if (requestError) throw new Error('ثبت درخواست ورود ناموفق بود: ' + requestError.message);
+
+            isMicOn = false;
+            isCamOn = false;
+            isWaitingForApproval = true;
+            myPermissions.mic = false;
+            myPermissions.cam = false;
+            myPermissions.whiteboard = false;
+            myPermissions.projector = false;
+            hideConnectCountdown();
+            if (btn) { btn.disabled = false; btn.textContent = I18N[currentLang].joinMeeting; }
+            const waiting = document.getElementById('waitingRoomOverlay');
+            const teacherName = document.getElementById('waitingTeacherName');
+            if (teacherName) teacherName.textContent = 'درخواست شما برای مدرس ارسال شد';
+            if (waiting) waiting.style.display = 'flex';
+            startStudentApprovalPolling();
+            showToast('درخواست ورود ارسال شد؛ تا تأیید مدرس منتظر بمانید.');
+            return;
         }
+
+        const permOk = await requestMediaPermission();
+        if (!permOk || !localStream || !localStream.getTracks().length) throw new Error('دسترسی میکروفون یا دوربین فراهم نشد.');
+        if (typeof RTCPeerConnection !== 'function') throw new Error('این مرورگر از WebRTC پشتیبانی نمی‌کند.');
+
+        const { error: roomError } = await sb.from('lroom_rooms').upsert({
+            room_code: roomId,
+            owner_id: currentUser.id,
+            is_active: true,
+            updated_at: new Date().toISOString()
+        }, { onConflict: 'room_code' });
+        if (roomError) throw new Error('ساخت اتاق ناموفق بود: ' + roomError.message);
+
+        // Preserve pending students who arrived through an invitation before the teacher entered.
+        const { error: staleMembersError } = await sb.from('lroom_room_members').delete()
+            .eq('room_code', roomId).neq('status', 'pending');
+        if (staleMembersError) throw new Error('پاک‌سازی نشست قبلی ناموفق بود: ' + staleMembersError.message);
 
         const { error: memberError } = await sb.from('lroom_room_members').insert({
             room_code: roomId,
             client_id: myId,
             user_id: currentUser.id,
             display_name: myName,
-            role: myRole
+            role: 'teacher',
+            status: 'admitted'
         });
-        if (memberError) throw new Error('اجازهٔ ورود به اتاق صادر نشد: ' + memberError.message);
+        if (memberError) throw new Error('ثبت حضور مدرس ناموفق بود: ' + memberError.message);
 
+        isWaitingForApproval = false;
+        isMicOn = !!localStream.getAudioTracks()[0];
+        isCamOn = !!localStream.getVideoTracks()[0];
+        localStream.getAudioTracks().forEach(track => track.enabled = isMicOn);
+        localStream.getVideoTracks().forEach(track => track.enabled = isCamOn);
         await loadP2PRoomRoster();
-        if (!teacherId) throw new Error('مدرس این اتاق پیدا نشد یا هنوز اتاق را باز نکرده است.');
-
         await loadP2PTurnConfig();
         await setupP2PRealtime();
-
-        if (myRole === 'teacher') {
-            isWaitingForApproval = false;
-            isMicOn = !!localStream.getAudioTracks()[0];
-            isCamOn = !!localStream.getVideoTracks()[0];
-            localStream.getAudioTracks().forEach(track => track.enabled = isMicOn);
-            localStream.getVideoTracks().forEach(track => track.enabled = isCamOn);
-        } else {
-            isMicOn = false;
-            isCamOn = false;
-            myPermissions.mic = false;
-            myPermissions.cam = false;
-            myPermissions.whiteboard = false;
-            myPermissions.projector = false;
-            isWaitingForApproval = true;
-            startWaitingAudioBlocker();
-            document.getElementById('waitingRoomOverlay').style.display = 'flex';
-        }
 
         showMeetingUI();
         syncP2PPeerTracks();
@@ -2191,35 +2336,155 @@ async function joinMeeting() {
         updateCamUI();
         updateMediaTransportBadge();
         hideConnectCountdown();
-        if (myRole === 'teacher') {
-            broadcast({ type: 'hello', name: myName, role: 'teacher', micOn: isMicOn, camOn: isCamOn, isWaiting: false });
-            broadcast({ type: 'mic', on: isMicOn });
-            broadcast({ type: 'cam', on: isCamOn });
-        } else {
-            showToast('🔗 در حال برقراری ارتباط مستقیم با مدرس...');
-        }
+        startTeacherWaitingRequests();
+        broadcast({ type: 'hello', name: myName, role: 'teacher', micOn: isMicOn, camOn: isCamOn, isWaiting: false });
+        broadcast({ type: 'mic', on: isMicOn });
+        broadcast({ type: 'cam', on: isCamOn });
         setTimeout(checkRealConnectionQuality, 5000);
-        const onlinePresenceCount = Object.values(roomChannel?.presenceState?.() || {}).reduce((sum, entries) => sum + (Array.isArray(entries) ? entries.length : 0), 0);
-        if (onlinePresenceCount >= P2P_MAX_PARTICIPANTS) showToast('⚠️ ظرفیت اتاق P2P تکمیل شده است.');
     } catch (err) {
         console.error('[Lroom P2P join]', err);
         hideConnectCountdown();
         showToast('❌ ' + (err.message || 'اتصال P2P ناموفق بود.'));
-        try {
-            if (roomChannel) { await roomChannel.untrack(); await sb.removeChannel(roomChannel); }
-        } catch (e) {}
+        if (myRole === 'teacher') {
+            try {
+                if (roomChannel) { await roomChannel.untrack(); await sb.removeChannel(roomChannel); }
+                if (roomId && currentUser) {
+                    await sb.from('lroom_room_members').delete().eq('room_code', roomId).eq('client_id', myId).eq('user_id', currentUser.id);
+                    await sb.from('lroom_rooms').update({ is_active: false, updated_at: new Date().toISOString() }).eq('room_code', roomId).eq('owner_id', currentUser.id);
+                }
+            } catch (cleanupError) { console.warn('[Lroom P2P cleanup]', cleanupError); }
+        } else if (myRole === 'student') {
+            try { if (roomId && myId && currentUser) await sb.from('lroom_room_members').delete().eq('room_code', roomId).eq('client_id', myId).eq('user_id', currentUser.id); } catch (e) {}
+        }
         roomChannel = null;
-        try {
-            if (roomId && myId) await sb.from('lroom_room_members').delete().eq('room_code', roomId).eq('client_id', myId);
-            if (myRole === 'teacher' && roomId) await sb.from('lroom_rooms').update({ is_active: false }).eq('room_code', roomId).eq('owner_id', currentUser.id);
-        } catch (cleanupError) { console.warn('[Lroom P2P cleanup]', cleanupError); }
         isWaitingForApproval = false;
+        if (studentApprovalTimer) { clearInterval(studentApprovalTimer); studentApprovalTimer = null; }
         stopWaitingAudioBlocker();
         const waitingOverlay = document.getElementById('waitingRoomOverlay');
         if (waitingOverlay) waitingOverlay.style.display = 'none';
         if (btn) { btn.disabled = false; btn.textContent = I18N[currentLang].joinMeeting; }
         p2pRoomRoster.clear();
         teacherId = '';
+        if (myRole === 'student' && isGuestMode) {
+            showGuestJoinScreen(roomId);
+            const guestError = document.getElementById('guestJoinError');
+            if (guestError) { guestError.textContent = '❌ ' + (err.message || 'درخواست ورود ناموفق بود.'); guestError.style.display = 'block'; }
+        }
+    }
+}
+
+function startTeacherWaitingRequests() {
+    if (teacherWaitingTimer) clearInterval(teacherWaitingTimer);
+    if (myRole !== 'teacher') return;
+    void refreshTeacherWaitingRequests();
+    teacherWaitingTimer = setInterval(() => { void refreshTeacherWaitingRequests(); }, 1800);
+}
+
+async function refreshTeacherWaitingRequests() {
+    if (myRole !== 'teacher' || !roomId || !currentUser || !sb) return;
+    try {
+        const { data, error } = await sb.from('lroom_room_members')
+            .select('client_id,user_id,display_name,joined_at')
+            .eq('room_code', roomId).eq('role', 'student').eq('status', 'pending')
+            .order('joined_at', { ascending: true });
+        if (error) throw error;
+        waitingList.clear();
+        (data || []).forEach(row => waitingList.set(row.client_id, {
+            name: sanitizeName(row.display_name) || 'دانشجو',
+            userId: row.user_id,
+            joinedAt: row.joined_at
+        }));
+        updateWaitingPanel();
+    } catch (error) {
+        console.warn('[Lroom] Waiting requests refresh failed:', error.message || error);
+    }
+}
+
+function startStudentApprovalPolling() {
+    if (studentApprovalTimer) clearInterval(studentApprovalTimer);
+    studentApprovalPollBusy = false;
+    const poll = () => { void pollStudentApproval(); };
+    poll();
+    studentApprovalTimer = setInterval(poll, 1800);
+}
+
+async function pollStudentApproval() {
+    if (studentApprovalPollBusy || !isWaitingForApproval || !roomId || !myId || !currentUser || !sb) return;
+    studentApprovalPollBusy = true;
+    try {
+        const { data, error } = await sb.from('lroom_room_members')
+            .select('status,display_name')
+            .eq('room_code', roomId).eq('client_id', myId).eq('user_id', currentUser.id)
+            .maybeSingle();
+        if (error) throw error;
+        if (!data) {
+            stopStudentApprovalPolling();
+            isWaitingForApproval = false;
+            document.getElementById('waitingRoomOverlay').style.display = 'none';
+            showToast('درخواست ورود دیگر در صف نیست. دوباره لینک یا کد کلاس را باز کنید.');
+            if (isGuestMode) showGuestJoinScreen(roomId);
+            return;
+        }
+        if (data.status === 'denied') {
+            stopStudentApprovalPolling();
+            isWaitingForApproval = false;
+            await sb.from('lroom_room_members').delete().eq('room_code', roomId).eq('client_id', myId).eq('user_id', currentUser.id);
+            document.getElementById('waitingRoomOverlay').style.display = 'none';
+            showToast('مدرس درخواست ورود شما را رد کرد.');
+            if (isGuestMode) showGuestJoinScreen(roomId);
+            return;
+        }
+        if (data.status === 'admitted') {
+            stopStudentApprovalPolling();
+            await completeApprovedStudentJoin();
+        }
+    } catch (error) {
+        console.warn('[Lroom] Approval polling failed:', error.message || error);
+    } finally {
+        studentApprovalPollBusy = false;
+    }
+}
+
+function stopStudentApprovalPolling() {
+    if (studentApprovalTimer) { clearInterval(studentApprovalTimer); studentApprovalTimer = null; }
+    studentApprovalPollBusy = false;
+}
+
+async function completeApprovedStudentJoin() {
+    try {
+        if (!localStream) {
+            const permOk = await requestMediaPermission();
+            if (!permOk || !localStream || !localStream.getTracks().length) throw new Error('برای ورود به کلاس، دسترسی میکروفون یا دوربین را مجاز کنید.');
+        }
+        if (typeof RTCPeerConnection !== 'function') throw new Error('این مرورگر از WebRTC پشتیبانی نمی‌کند.');
+        isWaitingForApproval = false;
+        isMicOn = false;
+        isCamOn = false;
+        localStream.getAudioTracks().forEach(track => track.enabled = false);
+        localStream.getVideoTracks().forEach(track => track.enabled = false);
+        await loadP2PRoomRoster();
+        if (!teacherId) throw new Error('مدرس هنوز آنلاین نیست؛ درخواست شما تأیید شده است، اما اتصال کلاس آماده نیست. چند لحظه بعد دوباره تلاش کنید.');
+        await loadP2PTurnConfig();
+        await setupP2PRealtime();
+        document.getElementById('waitingRoomOverlay').style.display = 'none';
+        stopWaitingAudioBlocker();
+        showMeetingUI();
+        syncP2PPeerTracks();
+        updateMicUI();
+        updateCamUI();
+        updateMediaTransportBadge();
+        showToast('✅ درخواست شما تأیید شد؛ در حال اتصال مستقیم به کلاس...');
+        setTimeout(checkRealConnectionQuality, 5000);
+    } catch (error) {
+        console.error('[Lroom approved student join]', error);
+        isWaitingForApproval = false;
+        document.getElementById('waitingRoomOverlay').style.display = 'none';
+        showToast('❌ ' + (error?.message || 'اتصال پس از تأیید ناموفق بود.'));
+        try { if (roomChannel) { await roomChannel.untrack(); await sb.removeChannel(roomChannel); } } catch (e) {}
+        roomChannel = null;
+        try { if (roomId && myId && currentUser) await sb.from('lroom_room_members').delete().eq('room_code', roomId).eq('client_id', myId).eq('user_id', currentUser.id); } catch (e) {}
+        if (localStream) { localStream.getTracks().forEach(track => track.stop()); localStream = null; }
+        if (isGuestMode) showGuestJoinScreen(roomId);
     }
 }
 
@@ -2269,8 +2534,8 @@ function showMeetingUI() {
 
 async function loadP2PRoomRoster() {
     const { data, error } = await sb.from('lroom_room_members')
-        .select('client_id,user_id,display_name,role')
-        .eq('room_code', roomId);
+        .select('client_id,user_id,display_name,role,status')
+        .eq('room_code', roomId).eq('status', 'admitted');
     if (error) throw new Error('خواندن فهرست کلاس ناموفق بود: ' + error.message);
     p2pRoomRoster = new Map((data || []).map(row => [row.client_id, row]));
     const teacher = (data || []).find(row => row.role === 'teacher');
@@ -3374,37 +3639,39 @@ function updateWaitingPanel() {
     `).join('');
 }
 
-function admitUser(pid) {
-    if (!isPrivileged()) return;
-    const w = waitingList.get(pid) || { name: '?' };
-    waitingList.delete(pid);
-    pendingAdmits.set(pid, { name: w.name, tries: 0 });
-    _doAdmit(pid);
-    updateWaitingPanel();
-    showToast(`✅ تایید شد — ${w.name}`);
-}
-
-function _doAdmit(pid) {
-    const rec = pendingAdmits.get(pid);
-    if (!rec) return;
-    rec.tries++;
-    sendTo(pid, { type: 'admit' });
-    if (rec.tries >= 8) {
-        pendingAdmits.delete(pid);
-        showToast('⚠️ اتصال دانشجو پاسخ نداد');
-        return;
+async function admitUser(pid) {
+    if (!isPrivileged() || myRole !== 'teacher') return;
+    const request = waitingList.get(pid);
+    if (!request) return showToast('این درخواست دیگر در صف نیست.');
+    if (isRoomLocked) return showToast('ابتدا قفل کلاس را باز کنید تا دانشجو را بپذیرید.');
+    try {
+        const { data, error } = await sb.from('lroom_room_members')
+            .update({ status: 'admitted' })
+            .eq('room_code', roomId).eq('client_id', pid).eq('status', 'pending')
+            .select('client_id');
+        if (error) throw error;
+        if (!data || !data.length) throw new Error('درخواست دیگر در صف انتظار نیست.');
+        waitingList.delete(pid);
+        updateWaitingPanel();
+        showToast(`✅ درخواست ${request.name} تأیید شد.`);
+    } catch (error) {
+        showToast('❌ تأیید ورود ناموفق بود: ' + (error.message || error));
     }
-    setTimeout(() => {
-        if (pendingAdmits.has(pid)) _doAdmit(pid);
-    }, 1500);
 }
 
-function denyUser(pid) {
-    if (!isPrivileged()) return;
-    sendTo(pid, { type: 'deny' });
-    waitingList.delete(pid);
-    pendingAdmits.delete(pid);
-    updateWaitingPanel();
+async function denyUser(pid) {
+    if (!isPrivileged() || myRole !== 'teacher') return;
+    try {
+        const { error } = await sb.from('lroom_room_members')
+            .update({ status: 'denied' })
+            .eq('room_code', roomId).eq('client_id', pid).eq('status', 'pending');
+        if (error) throw error;
+        waitingList.delete(pid);
+        updateWaitingPanel();
+        showToast('درخواست ورود رد شد.');
+    } catch (error) {
+        showToast('❌ رد درخواست ناموفق بود: ' + (error.message || error));
+    }
 }
 
 function cancelWaiting() {
@@ -5351,6 +5618,8 @@ async function leaveMeeting(s) {
     if (qualityCheckInterval) { clearInterval(qualityCheckInterval); qualityCheckInterval = null; }
     if (waitingAudioBlockInterval) { clearInterval(waitingAudioBlockInterval); waitingAudioBlockInterval = null; }
     if (connectBarTimer) { clearInterval(connectBarTimer); connectBarTimer = null; }
+    stopStudentApprovalPolling();
+    if (teacherWaitingTimer) { clearInterval(teacherWaitingTimer); teacherWaitingTimer = null; }
 
     hideConnectCountdown();
     hidePermissionModal();
@@ -5429,12 +5698,17 @@ async function leaveMeeting(s) {
     document.getElementById('waitingRoomOverlay').style.display = 'none';
     document.getElementById('meeting').classList.remove('active');
     document.getElementById('videos').innerHTML = '';
-    document.getElementById('lobby').style.display = 'flex';
     const joinInput = document.getElementById('joinRoomCode');
     if (joinInput) joinInput.value = '';
     const jb = document.getElementById('joinBtn');
     if (jb) { jb.disabled = false; jb.textContent = (I18N[currentLang] && I18N[currentLang].joinMeeting) || 'ورود به جلسه'; }
-    setLobbyRole('teacher');
+    if (isGuestMode) {
+        document.getElementById('lobby').style.display = 'none';
+        showGuestJoinScreen(roomId);
+    } else {
+        document.getElementById('lobby').style.display = 'flex';
+        setLobbyRole('teacher');
+    }
 }
 
 window.addEventListener('beforeunload', () => {
@@ -5496,28 +5770,8 @@ window.initLroomClassUI = function initLroomClassUI() {
     if (languageSelect) languageSelect.value = savedLanguage;
     try { applyLanguage(savedLanguage); } catch (error) { console.warn('[Lroom language]', error); }
 
-    // Authenticated invite links are resumed only after the class module is ready.
-    const params = new URLSearchParams(location.search);
-    const pendingRoom = lroomStorage.getItem('lroom_pending_room');
-    const roomFromUrl = params.get('room') || pendingRoom;
-    const shouldJoin = params.get('join') === '1' || !!pendingRoom;
-    if (currentUser && roomFromUrl && shouldJoin && currentUser.role !== 'admin') {
-        setTimeout(async () => {
-            const end = parseDateSafe(currentUser.subscriptionEnd);
-            if (end && end.getTime() < Date.now()) { showToast('⚠️ اعتبار حساب تمام شده است.'); return; }
-            selectedLobbyRole = 'student';
-            setLobbyRole('student');
-            const codeInput = document.getElementById('joinRoomCode');
-            if (codeInput) codeInput.value = roomFromUrl;
-            showToast('🚀 در حال ورود به کلاس...');
-            try {
-                await joinMeeting();
-                if (document.getElementById('meeting')?.classList.contains('active')) lroomStorage.removeItem('lroom_pending_room');
-            } catch (error) {
-                console.warn('[Lroom invite auto-join]', error);
-            }
-        }, 500);
-    }
+    // Invite URLs are handled by the lightweight name-only screen before authentication.
+    // The student is added to the waiting queue and cannot join the P2P room before approval.
 };
 
 
