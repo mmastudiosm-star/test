@@ -3,9 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-<meta name="description" content="Lroom — a modern, secure online classroom and webinar platform." />
-<meta name="theme-color" content="#101426" />
-<title>Lroom | Online Classroom</title>
+<title>Lroom | کلاس آنلاین</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%238ab4f8'/><text x='50' y='72' font-size='70' font-weight='900' text-anchor='middle' fill='%23202124' font-family='Tahoma'>L</text></svg>" />
 <style>
 :root{--bg-primary:#202124;--bg-secondary:#16213e;--bg-tertiary:#303134;--bg-hover:#3c4043;--bg-active:#0f3460;--text-primary:#fff;--text-secondary:#9aa0a6;--text-muted:#5f6368;--border-color:#3c4043;--accent:#8ab4f8;--accent-hover:#aecbfa;--danger:#ea4335;--success:#34a853;--warning:#fbbc04;--safe-bottom:env(safe-area-inset-bottom,0px)}
@@ -47,7 +45,11 @@ button{font-family:inherit}
 #headerActions button{background:var(--bg-tertiary);border:none;color:var(--text-primary);padding:7px 12px;border-radius:6px;cursor:pointer;font-size:13px;font-family:inherit;white-space:nowrap}
 #headerActions button:hover{background:var(--bg-hover)}
 #headerActions button.teacher-btn{background:var(--accent);color:#202124;font-weight:600}
+#recordingIndicator{display:none;align-items:center;gap:6px;padding:5px 12px;background:var(--danger);border-radius:20px;font-size:12px;font-weight:600;color:#fff}
+#recordingIndicator.active{display:flex}
+#recordingIndicator .dot{width:8px;height:8px;background:#fff;border-radius:50%;animation:rec-blink 1s infinite}
 #classTimer{padding:5px 12px;background:var(--bg-tertiary);border-radius:20px;font-size:12px;font-weight:600;font-family:monospace;color:var(--text-primary)}
+@keyframes rec-blink{0%,100%{opacity:1}50%{opacity:.3}}
 #mainArea{flex:1;display:flex;overflow:hidden;position:relative;min-height:0}
 #videos{flex:1;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:6px;padding:6px;background:var(--bg-primary);overflow-y:auto;align-content:start;grid-auto-rows:min-content;transition:all .3s}
 #videos.many{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:4px}
@@ -68,6 +70,7 @@ button{font-family:inherit}
 .video-box.spotlight-source::before{content:'🎯';position:absolute;top:6px;left:6px;font-size:18px;z-index:5;filter:drop-shadow(0 2px 4px rgba(0,0,0,.8))}
 .video-box:fullscreen{background:#000}
 .video-box:fullscreen video{object-fit:contain}
+#btnBlur.on{background:linear-gradient(135deg,var(--accent),#4285f4);color:#202124}
 .video-box.screensharing video:not(.ss-video){display:none!important}
 .video-box.screensharing .avatar{display:none!important}
 .video-box.screensharing .ss-video{display:block!important}
@@ -101,6 +104,7 @@ button{font-family:inherit}
 .teacher-action-btn{width:100%;padding:10px 14px;border:none;border-radius:8px;background:var(--bg-tertiary);color:var(--text-primary);cursor:pointer;font-family:inherit;font-size:13px;text-align:right;display:flex;align-items:center;gap:8px;margin-bottom:6px}
 .teacher-action-btn:hover{background:var(--bg-hover)}
 .teacher-action-btn.danger{background:var(--danger);color:#fff}
+.teacher-action-btn.recording{background:var(--danger);color:#fff}
 #pendingRequests{padding:10px 12px;border-bottom:1px solid var(--border-color);background:var(--bg-secondary);max-height:200px;overflow-y:auto;display:none}
 #pendingRequests.active{display:block}
 #pendingRequests h4{font-size:12px;color:var(--warning);margin-bottom:8px}
@@ -320,6 +324,67 @@ button{font-family:inherit}
 #giftStatus{font-size:13px;text-align:center;margin-bottom:10px;min-height:20px;font-weight:600}
 #giftStatus.ok{color:var(--success)}
 #giftStatus.err{color:var(--danger)}
+#adminPanelModal{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;z-index:3000;padding:15px}
+#adminPanelModal.open{display:flex}
+#adminPanelContainer{background:var(--bg-primary);border-radius:16px;width:100%;max-width:1100px;height:92vh;height:92dvh;display:flex;flex-direction:column;overflow:hidden;border:2px solid var(--warning)}
+#adminPanelHeader{padding:14px 20px;background:linear-gradient(135deg,var(--warning),#ff9800);color:#202124;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+#adminPanelHeader h2{font-size:18px;font-weight:800;display:flex;align-items:center;gap:8px}
+#adminPanelHeader .close-btn{background:rgba(0,0,0,.2);border:none;color:#202124;font-size:22px;cursor:pointer;padding:6px 12px;border-radius:8px;font-weight:700}
+.admin-tabs{display:flex;background:var(--bg-secondary);border-bottom:1px solid var(--border-color);flex-shrink:0;overflow-x:auto}
+.admin-tab{flex:1;min-width:120px;padding:12px 16px;background:none;border:none;color:var(--text-secondary);cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;border-bottom:3px solid transparent;white-space:nowrap}
+.admin-tab.active{color:var(--warning);border-bottom-color:var(--warning);background:var(--bg-tertiary)}
+.admin-tab:hover{background:var(--bg-tertiary)}
+#adminPanelBody{flex:1;overflow-y:auto;padding:16px;background:var(--bg-primary)}
+.admin-section{display:none}
+.admin-section.active{display:block}
+.admin-card{background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:12px;padding:16px;margin-bottom:14px}
+.admin-card h3{font-size:15px;color:var(--warning);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.admin-input,.admin-select,.admin-textarea{width:100%;padding:10px 14px;background:var(--bg-tertiary);border:1px solid var(--border-color);border-radius:8px;color:var(--text-primary);font-family:inherit;font-size:13px;margin-bottom:10px}
+.admin-input:focus,.admin-select:focus,.admin-textarea:focus{outline:none;border-color:var(--warning)}
+.admin-textarea{min-height:80px;resize:vertical}
+.admin-btn{padding:10px 20px;background:var(--warning);color:#202124;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+.admin-btn:hover{opacity:.9}
+.admin-btn.danger{background:var(--danger);color:#fff}
+.admin-btn.success{background:var(--success);color:#fff}
+.admin-btn.secondary{background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border-color)}
+.admin-btn:disabled{opacity:.5;cursor:wait}
+.admin-user-row{display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg-tertiary);border-radius:10px;margin-bottom:8px;flex-wrap:wrap}
+.admin-user-avatar{width:40px;height:40px;border-radius:50%;background:var(--accent);color:#202124;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0}
+.admin-user-avatar.admin{background:linear-gradient(135deg,#ffd700,#ff9800);color:#202124}
+.admin-user-info{flex:1;min-width:150px}
+.admin-user-name{font-size:13px;font-weight:700}
+.admin-user-email{font-size:11px;color:var(--text-secondary);direction:ltr;text-align:right}
+.admin-user-meta{font-size:10px;color:var(--text-muted);margin-top:3px}
+.admin-user-actions{display:flex;gap:6px;flex-wrap:wrap}
+.admin-user-actions button{padding:6px 12px;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit}
+.admin-user-actions .add-days{background:var(--success);color:#fff}
+.admin-user-actions .sub-days{background:var(--warning);color:#202124}
+.admin-user-actions .reset-pass{background:var(--accent);color:#202124}
+.admin-user-actions .del-user{background:var(--danger);color:#fff}
+.admin-stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px}
+.admin-stat-box{background:var(--bg-tertiary);border-radius:10px;padding:14px;text-align:center;border:1px solid var(--border-color)}
+.admin-stat-box .num{font-size:24px;font-weight:800;color:var(--warning)}
+.admin-stat-box .lbl{font-size:11px;color:var(--text-secondary);margin-top:4px}
+.discount-row{display:flex;align-items:center;gap:10px;padding:12px;background:var(--bg-tertiary);border-radius:10px;margin-bottom:8px;flex-wrap:wrap}
+.discount-code{font-family:monospace;font-size:16px;font-weight:800;background:linear-gradient(135deg,var(--warning),#ff9800);color:#202124;padding:6px 14px;border-radius:8px;letter-spacing:2px;direction:ltr;user-select:all}
+.discount-info{flex:1;min-width:140px;font-size:12px}
+.discount-info .di-days{color:var(--success);font-weight:700}
+.discount-info .di-status{font-size:10px;margin-top:3px}
+.discount-info .di-status.used{color:var(--danger)}
+.discount-info .di-status.active{color:var(--success)}
+.discount-info .di-status.expired{color:var(--text-muted)}
+.announcement-row{background:var(--bg-tertiary);border-radius:10px;padding:12px;margin-bottom:8px;border-right:3px solid var(--warning)}
+.announcement-row .an-text{font-size:13px;line-height:1.7;margin-bottom:6px}
+.announcement-row .an-meta{font-size:10px;color:var(--text-secondary)}
+.announcement-row .an-meta b{color:var(--accent)}
+#adminGlobalBanner{position:fixed;top:0;left:0;right:0;background:linear-gradient(135deg,var(--warning),#ff9800);color:#202124;padding:14px 20px;padding-top:calc(14px + env(safe-area-inset-top,0px));z-index:99998;display:none;justify-content:space-between;align-items:center;gap:12px;box-shadow:0 4px 20px rgba(0,0,0,.4);font-weight:600}
+#adminGlobalBanner.show{display:flex}
+#adminGlobalBanner .gb-text{flex:1;font-size:14px;line-height:1.5}
+#adminGlobalBanner .gb-text small{display:block;font-size:11px;font-weight:400;opacity:.8;margin-top:3px}
+#adminGlobalBanner button{background:rgba(0,0,0,.15);border:none;color:#202124;font-size:18px;cursor:pointer;padding:4px 12px;border-radius:8px;font-weight:700}
+.admin-empty{text-align:center;color:var(--text-secondary);font-size:13px;padding:30px 10px}
+.role-badge-admin{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:linear-gradient(135deg,#ffd700,#ff9800);color:#202124}
+.role-badge-user{padding:2px 10px;border-radius:10px;font-size:10px;font-weight:700;background:var(--bg-hover);color:var(--text-secondary)}
 #connBanner{position:fixed;bottom:calc(80px + var(--safe-bottom));left:50%;transform:translateX(-50%);background:var(--warning);color:#202124;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;display:none;z-index:9998;box-shadow:0 4px 12px rgba(0,0,0,.3);max-width:90%;text-align:center}
 #connBanner.show{display:block}
 #guestJoinScreen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px;position:fixed;inset:0;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);z-index:9999;overflow-y:auto}
@@ -372,6 +437,10 @@ button{font-family:inherit}
 #controls{gap:8px;padding:14px 8px calc(22px + var(--safe-bottom)) 8px}
 .ctrl-btn{width:44px;height:44px;font-size:16px}
 .ctrl-btn.end{width:60px;font-size:12px}
+#adminPanelContainer{height:100vh;height:100dvh;border-radius:0;max-width:100%}
+.admin-tab{font-size:11px;padding:10px 8px;min-width:auto}
+.admin-user-row{padding:8px}
+.admin-user-avatar{width:34px;height:34px;font-size:13px}
 #giftCodeBox{flex-direction:column}
 #giftCodeBox button{width:100%}
 #connectBar{width:200px}
@@ -383,7 +452,118 @@ button{font-family:inherit}
 }
 @media (max-width:600px){.auth-box{padding:24px 18px}}
 
-.media-mode-badge{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:12px;background:var(--bg-tertiary);border:1px solid var(--border-color);color:var(--success);font-size:10px;font-weight:700;direction:ltr}
+/* Lroom visual refresh — layered gradients, glass surfaces and clearer interaction states. */
+:root {
+  --bg-primary: #090f1f;
+  --bg-secondary: #101a30;
+  --bg-tertiary: #17243d;
+  --bg-hover: #223454;
+  --bg-active: #273d65;
+  --text-primary: #f4f7ff;
+  --text-secondary: #b3bfd6;
+  --text-muted: #7f8eaa;
+  --border-color: rgba(164, 188, 235, .18);
+  --accent: #a78bfa;
+  --accent-hover: #c4b5fd;
+  --danger: #fb7185;
+  --success: #34d399;
+  --warning: #fbbf24;
+}
+body {
+  background:
+    radial-gradient(ellipse at 12% 8%, rgba(124, 58, 237, .22), transparent 34%),
+    radial-gradient(ellipse at 92% 82%, rgba(6, 182, 212, .14), transparent 32%),
+    linear-gradient(145deg, #080d1b 0%, #0e1730 48%, #0a1224 100%);
+  background-attachment: fixed;
+}
+body.light-theme {
+  background:
+    radial-gradient(ellipse at 12% 8%, rgba(139, 92, 246, .10), transparent 34%),
+    radial-gradient(ellipse at 92% 82%, rgba(6, 182, 212, .08), transparent 32%),
+    linear-gradient(145deg, #f6f8ff 0%, #edf2ff 48%, #f8fbff 100%);
+}
+button, input, select, textarea { transition: border-color .2s ease, background .2s ease, box-shadow .2s ease, transform .2s ease; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 3px solid rgba(167, 139, 250, .45);
+  outline-offset: 2px;
+}
+#authScreen {
+  background:
+    radial-gradient(circle at 18% 18%, rgba(139, 92, 246, .30), transparent 28%),
+    radial-gradient(circle at 85% 76%, rgba(6, 182, 212, .20), transparent 30%),
+    linear-gradient(135deg, #080d1b 0%, #101a36 52%, #11152d 100%);
+  isolation: isolate;
+}
+#authScreen::before, #authScreen::after {
+  content: ""; position: fixed; z-index: 0; border-radius: 50%; pointer-events: none;
+  filter: blur(2px); opacity: .45; animation: lroom-drift 14s ease-in-out infinite alternate;
+}
+#authScreen::before { width: 280px; height: 280px; top: 8%; left: 7%; border: 1px solid rgba(196,181,253,.22); box-shadow: 0 0 90px rgba(139,92,246,.22) inset; }
+#authScreen > * { position: relative; z-index: 1; }
+#authScreen::after { width: 190px; height: 190px; right: 8%; bottom: 9%; border: 1px solid rgba(103,232,249,.22); box-shadow: 0 0 70px rgba(34,211,238,.18) inset; animation-delay: -5s; }
+.auth-box, .guest-box, .expired-box, .session-code-box, .student-join-box,
+.modal-content, #adminPanelContainer, #whiteboardContainer, #projectorContainer, #screenShareContainer {
+  background: linear-gradient(145deg, rgba(20, 31, 56, .94), rgba(12, 22, 42, .94));
+  border: 1px solid rgba(183, 199, 238, .20);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .38), 0 1px 0 rgba(255,255,255,.05) inset;
+  backdrop-filter: blur(22px);
+}
+.auth-box { border-radius: 26px; padding: 36px 32px; position: relative; overflow: hidden; animation: lroom-rise .65s cubic-bezier(.2,.8,.2,1) both; }
+.auth-box::before { content:""; position:absolute; inset:0 0 auto; height:3px; background:linear-gradient(90deg,#22d3ee,#a78bfa,#f472b6); }
+.auth-logo .logo-icon, .logo-icon { background: linear-gradient(135deg,#8b5cf6 0%,#06b6d4 100%); box-shadow: 0 12px 32px rgba(124,58,237,.32); }
+.auth-logo .logo-text strong, .logo-text strong { color: #c4b5fd; }
+.auth-tabs, .auth-method-toggle { background: rgba(6, 12, 26, .48); border: 1px solid rgba(183,199,238,.10); }
+.auth-tab.active, .method-btn.active { background: linear-gradient(135deg,#a78bfa,#67e8f9); color:#11182a; box-shadow: 0 8px 22px rgba(139,92,246,.24); }
+.auth-form input, #lobby input, #lobby select, .modal-content input, .modal-content select, .modal-content textarea,
+.admin-input, .admin-select, .admin-textarea, #chatInput input {
+  background: rgba(5, 12, 27, .56); border: 1px solid rgba(164,188,235,.20); border-radius: 12px;
+}
+.auth-form input:focus, #lobby input:focus, #lobby select:focus, .modal-content input:focus,
+.modal-content select:focus, .modal-content textarea:focus { border-color:#a78bfa; box-shadow:0 0 0 4px rgba(167,139,250,.12); }
+.auth-form button.submit, #lobby button.primary, .guest-box button.primary {
+  background: linear-gradient(110deg,#a78bfa 0%,#67e8f9 100%); color:#11182a; border-radius:12px;
+  box-shadow: 0 12px 28px rgba(124,58,237,.22); font-weight:800;
+}
+.auth-form button.submit:hover, #lobby button.primary:hover, .guest-box button.primary:hover { transform:translateY(-2px); box-shadow:0 16px 34px rgba(124,58,237,.30); }
+#lobby { background: transparent; }
+.preview { border-radius:20px; border:1px solid rgba(183,199,238,.22); box-shadow:0 18px 55px rgba(0,0,0,.34); }
+.session-code-box, .student-join-box { border-width:1px; border-radius:18px; }
+.session-code-display { background:linear-gradient(120deg,#7c3aed,#0891b2); box-shadow:0 10px 28px rgba(14,165,233,.18); }
+.role-btn { border-radius:14px; background:rgba(16,26,48,.78); }
+.role-btn.active { background:linear-gradient(120deg,#a78bfa,#67e8f9); border-color:transparent; }
+#header { background:rgba(9,15,31,.82); backdrop-filter:blur(18px); }
+#controls, #reactionsBar { background:rgba(9,15,31,.90); backdrop-filter:blur(18px); }
+.ctrl-btn { border:1px solid rgba(183,199,238,.11); box-shadow:0 5px 16px rgba(0,0,0,.16); }
+.ctrl-btn:hover { transform:translateY(-3px); background:#2a3d60; }
+.ctrl-btn.end { background:linear-gradient(135deg,#fb7185,#e11d48); }
+.video-box { border-radius:16px; background:linear-gradient(145deg,#1a2947,#121d35); border-color:rgba(183,199,238,.10); box-shadow:0 10px 28px rgba(0,0,0,.20); }
+.video-box.speaking { border-color:#34d399; box-shadow:0 0 0 2px rgba(52,211,153,.20),0 0 28px rgba(52,211,153,.24); }
+#teacherPanel, #attendancePanel, #pollPanel, #breakoutPanel, #certPanel, #statsPanel, #participantsPanel, #waitingPanel, #chat {
+  background:rgba(12,20,39,.96); backdrop-filter:blur(18px); border-color:rgba(183,199,238,.16);
+}
+.panel-header, #chatInput, .chat-tabs { border-color:rgba(183,199,238,.14); }
+.teacher-action-btn, .student-card, .participant-item, .stat-card, .admin-card, .file-item, .breakout-group {
+  border:1px solid rgba(183,199,238,.09); border-radius:12px; background:rgba(24,38,66,.78);
+}
+.teacher-action-btn:hover, .participant-item:hover { background:rgba(44,62,99,.82); transform:translateY(-1px); }
+.modal { backdrop-filter:blur(10px); }
+.modal-content { border-radius:22px; }
+#toast { background:rgba(23,36,61,.96); border:1px solid rgba(183,199,238,.16); backdrop-filter:blur(14px); }
+#adminPanelHeader { background:linear-gradient(120deg,#fbbf24,#fb923c); }
+#adminPanelBody { background:transparent; }
+#recordingIndicator { box-shadow:0 5px 18px rgba(251,113,133,.25); }
+@keyframes lroom-rise { from { opacity:0; transform:translateY(18px) scale(.985); } to { opacity:1; transform:translateY(0) scale(1); } }
+@keyframes lroom-drift { from { transform:translate3d(0,0,0) rotate(0deg); } to { transform:translate3d(18px,-15px,0) rotate(8deg); } }
+@media (max-width:600px) {
+  .auth-box { padding:28px 20px; border-radius:22px; }
+  #authScreen { padding:16px; }
+  .auth-logo .logo-text { font-size:29px; }
+  .guest-box { padding:28px 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; scroll-behavior:auto !important; transition-duration:.01ms !important; }
+}
+
 </style>
 </head>
 <body>
@@ -392,9 +572,8 @@ button{font-family:inherit}
     <div class="guest-icon">🎓</div>
     <h2>ورود به کلاس</h2>
     <div class="guest-room" id="guestRoomCodeDisplay">—</div>
-    <p>برای ورود امن به کلاس مستقیم، ابتدا با حساب Lroom وارد شوید یا ثبت‌نام کنید.<br>پس از ورود، به همین کلاس هدایت می‌شوید.</p>
+    <p>برای ورود، نام خود را وارد کنید.<br>مدرس شما را به کلاس راه می‌دهد.</p>
     <input type="text" id="guestNameInput" placeholder="نام و نام خانوادگی" maxlength="40" autocomplete="name" />
-    <div id="guestJoinError" role="alert" style="display:none;color:#ff8a80;font-size:13px;line-height:1.7;margin:0 0 10px;"></div>
     <button class="primary" id="guestJoinBtn" onclick="submitGuestJoin()">🚀 ورود به اتاق انتظار</button>
     <div class="back-link" onclick="cancelGuestJoin()">← بازگشت به صفحه اصلی</div>
   </div>
@@ -403,12 +582,18 @@ button{font-family:inherit}
 <div id="authScreen">
     <div class="auth-box">
         <div class="auth-logo"><div class="logo-icon">L</div><div class="logo-text"><strong>room</strong></div></div>
-<div id="emailAuthSection">
+
+        <div class="auth-method-toggle">
+            <button type="button" class="method-btn active" id="methodBtnEmail" onclick="switchAuthMethod('email')">📧 ایمیل</button>
+            <button type="button" class="method-btn" id="methodBtnPhone" onclick="switchAuthMethod('phone')">📱 شماره همراه</button>
+        </div>
+
+        <div id="emailAuthSection">
             <div class="auth-tabs">
-                <button type="button" class="auth-tab active" id="tabLogin" data-auth-tab="login" aria-controls="loginForm" aria-selected="true">ورود</button>
-                <button type="button" class="auth-tab" id="tabRegister" data-auth-tab="register" aria-controls="registerForm" aria-selected="false">ثبت‌نام</button>
+                <button class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">ورود</button>
+                <button class="auth-tab" id="tabRegister" onclick="switchAuthTab('register')">ثبت‌نام</button>
             </div>
-            <form class="auth-form" id="loginForm" novalidate>
+            <form class="auth-form" id="loginForm" onsubmit="handleLogin(event)">
                 <label>ایمیل</label>
                 <input type="email" id="loginEmail" required autocomplete="email" />
                 <label>رمز عبور</label>
@@ -416,13 +601,13 @@ button{font-family:inherit}
                 <div class="auth-error" id="loginError"></div>
                 <button type="submit" class="submit" id="loginBtn">ورود</button>
             </form>
-            <form class="auth-form" id="registerForm" style="display:none;" novalidate>
+            <form class="auth-form" id="registerForm" style="display:none;" onsubmit="handleRegister(event)">
                 <label>نام و نام خانوادگی</label>
                 <input type="text" id="regName" required autocomplete="name" />
                 <label>ایمیل</label>
                 <input type="email" id="regEmail" required autocomplete="email" />
                 <label>رمز عبور</label>
-                <input type="password" id="regPassword" minlength="8" required autocomplete="new-password" />
+                <input type="password" id="regPassword" minlength="6" required autocomplete="new-password" />
                 <label>🎁 کد هدیه (اختیاری)</label>
                 <input type="text" id="regDiscountCode" placeholder="مثلاً LROOM-ABC123" style="direction:ltr;text-align:center;font-family:monospace;letter-spacing:2px;text-transform:uppercase;" />
                 <button type="button" onclick="applyDiscountCode('regDiscountCode')" style="width:100%;padding:9px;margin-top:6px;background:var(--success);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-family:inherit;font-size:12px;">🎁 بررسی کد هدیه</button>
@@ -433,7 +618,37 @@ button{font-family:inherit}
             </form>
         </div>
 
-        
+        <div id="phoneAuthSection" style="display:none;">
+            <div class="auth-tabs">
+                <button class="auth-tab active" id="phoneTabLogin" onclick="switchPhoneTab('login')">ورود</button>
+                <button class="auth-tab" id="phoneTabRegister" onclick="switchPhoneTab('register')">ثبت‌نام</button>
+            </div>
+
+            <form class="auth-form" id="phoneLoginForm" onsubmit="handlePhoneLogin(event)">
+                <label>شماره همراه</label>
+                <input type="tel" id="phoneLoginInput" placeholder="09123456789" dir="ltr" required autocomplete="tel" />
+                <label>رمز عبور</label>
+                <input type="password" id="phoneLoginPassword" required autocomplete="current-password" />
+                <div class="auth-error" id="phoneLoginError"></div>
+                <button type="submit" class="submit" id="phoneLoginBtn">ورود</button>
+            </form>
+
+            <form class="auth-form" id="phoneRegisterForm" style="display:none;" onsubmit="handlePhoneRegister(event)">
+                <label>نام و نام خانوادگی</label>
+                <input type="text" id="phoneRegName" required autocomplete="name" />
+                <label>شماره همراه</label>
+                <input type="tel" id="phoneRegInput" placeholder="09123456789" dir="ltr" required autocomplete="tel" />
+                <label>رمز عبور</label>
+                <input type="password" id="phoneRegPassword" minlength="6" required autocomplete="new-password" />
+                <label>🎁 کد هدیه (اختیاری)</label>
+                <input type="text" id="phoneRegDiscountCode" placeholder="مثلاً LROOM-ABC123" style="direction:ltr;text-align:center;font-family:monospace;letter-spacing:2px;text-transform:uppercase;" />
+                <button type="button" onclick="applyDiscountCode('phoneRegDiscountCode')" style="width:100%;padding:9px;margin-top:6px;background:var(--success);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-family:inherit;font-size:12px;">🎁 بررسی کد هدیه</button>
+                <div class="auth-error" id="phoneRegError"></div>
+                <div class="auth-success" id="phoneRegSuccess"></div>
+                <button type="submit" class="submit" id="phoneRegBtn">ثبت‌نام</button>
+                <p style="text-align:center;color:var(--text-secondary);font-size:12px;margin-top:12px;">🎁 ۲۰ روز اعتبار رایگان</p>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -469,7 +684,7 @@ button{font-family:inherit}
     <div class="user-menu" id="userMenu">
         <div class="menu-item" onclick="showSubscriptionInfo()">💳 وضعیت اشتراک</div>
         <div class="menu-item" onclick="openGiftCodeModal()">🎁 وارد کردن کد هدیه</div>
-        
+
         <div class="menu-sep"></div>
         <div class="menu-item" onclick="logout()">🚪 خروج</div>
     </div>
@@ -513,7 +728,7 @@ button{font-family:inherit}
 
 <div class="student-join-box" id="studentJoinBox" style="display:none;">
 <div class="sj-label">🔑 کد جلسه را از مدرس خود بگیرید و اینجا وارد کنید</div>
-<input type="text" id="joinRoomCode" placeholder="مثلاً A7K9M2Q8TX" maxlength="12" style="direction:ltr;text-transform:uppercase;letter-spacing:2px;" />
+<input type="text" id="joinRoomCode" placeholder="مثلاً 1001" maxlength="20" />
 <div class="sj-hint">پس از وارد کردن کد، روی «ورود به جلسه» کلیک کنید.</div>
 </div>
 
@@ -527,12 +742,11 @@ button{font-family:inherit}
 <span id="brandHeader">Lroom</span>
 <span>جلسه:</span> <strong id="roomName"></strong>
 <span id="roleBadge">دانشجو</span>
-<span id="mediaModeBadge" class="media-mode-badge" title="Media transport">P2P DIRECT</span>
 <small id="participantCount" style="color:var(--text-secondary);"></small>
 </div>
 <div id="headerActions">
 <div id="classTimer">⏱️ 00:00</div>
-
+<div id="recordingIndicator"><span class="dot"></span><span>ضبط</span><span id="recordingTimer">00:00</span></div>
 <button onclick="copyLink()">🔗 لینک</button>
 <button onclick="toggleParticipantsPanel()">👥 شرکت‌کننده‌ها <span id="participantsCount" style="background:var(--accent);color:#202124;border-radius:10px;padding:0 6px;font-size:10px;font-weight:700;">0</span></button>
 <button id="btnWaitingPanel" onclick="toggleWaitingPanel()" style="display:none;">🚪 انتظار <span id="waitingCount" style="background:var(--danger);color:#fff;border-radius:10px;padding:0 6px;font-size:10px;font-weight:700;display:none;">0</span></button>
@@ -563,6 +777,7 @@ button{font-family:inherit}
 <button class="teacher-action-btn" onclick="clearAllHands()">✋ پایین آوردن دست‌ها</button>
 <button class="teacher-action-btn" onclick="openWhiteboard()">📝 تخته سفید</button>
 <button class="teacher-action-btn" onclick="openProjector()">📽️ ویدیو پروژکتور</button>
+<button class="teacher-action-btn" id="btnRecordPanel" onclick="toggleRecording()">🎥 شروع ضبط</button>
 <button class="teacher-action-btn" onclick="openFileUpload()">📤 آپلود فایل</button>
 <button class="teacher-action-btn" onclick="openActivityTimer()">⏳ تایمر فعالیت</button>
 <button class="teacher-action-btn" onclick="openAnnouncement()">📢 اعلان</button>
@@ -641,6 +856,7 @@ button{font-family:inherit}
 <div id="controls">
 <button class="ctrl-btn" id="btnMic" onclick="toggleMic()">🎤</button>
 <button class="ctrl-btn" id="btnCam" onclick="toggleCam()">📹</button>
+<button class="ctrl-btn" id="btnBlur" onclick="toggleBackgroundBlur()" title="پس‌زمینه تار">🌫️</button>
 <button class="ctrl-btn" id="btnScreen" onclick="toggleScreen()">🖥️</button>
 <button class="ctrl-btn" id="btnWhiteboard" onclick="openWhiteboard()">📝</button>
 <button class="ctrl-btn" id="btnProjector" onclick="openProjector()">📽️</button>
@@ -731,7 +947,7 @@ button{font-family:inherit}
 </div></div>
 
 <div id="kickModal" class="modal"><div class="modal-content"><h2>🚫 اخراج</h2><p id="kickReason">...</p><button onclick="leaveMeeting(true)">باشه</button></div></div>
-
+<div id="recordingModal" class="modal"><div class="modal-content"><h2>🎥 ضبط تمام شد</h2><p>آماده دانلود است.</p><button onclick="downloadRecording()">⬇️ دانلود</button><button class="secondary" onclick="discardRecording()">🗑️ حذف</button></div></div>
 <div id="pollModal" class="modal"><div class="modal-content"><h2>📝 نظرسنجی</h2><input type="text" id="pollQuestion" placeholder="سوال..." /><input type="text" class="poll-opt-input" placeholder="گزینه ۱" /><input type="text" class="poll-opt-input" placeholder="گزینه ۲" /><input type="text" class="poll-opt-input" placeholder="گزینه ۳" /><input type="text" class="poll-opt-input" placeholder="گزینه ۴" /><button onclick="createPoll()">ایجاد</button><button class="secondary" onclick="closeModal('pollModal')">لغو</button></div></div>
 <div id="fileUploadModal" class="modal"><div class="modal-content"><h2>📤 آپلود</h2><p>حداکثر ۵MB</p><input type="file" id="fileInput" style="padding:8px;" /><button onclick="uploadFile()">آپلود</button><button class="secondary" onclick="closeModal('fileUploadModal')">لغو</button></div></div>
 <div id="filesPanelModal" class="modal"><div class="modal-content"><h2>📎 فایل‌ها</h2><div id="filesList" style="text-align:right;max-height:400px;overflow-y:auto;"></div><button class="secondary" onclick="closeModal('filesPanelModal')">بستن</button></div></div>
@@ -802,21 +1018,54 @@ button{font-family:inherit}
 
 
 
+<div id="adminSubModal" class="modal">
+  <div class="modal-content" style="text-align: right;">
+    <h2>⚙️ تنظیمات اشتراک: <span id="subModalUserName" style="color:var(--accent)"></span></h2>
+    <input type="hidden" id="subModalUserId" />
+    
+    <label style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;display:block;">⏱️ مدت زمان (روز)</label>
+    <input type="number" id="subModalDays" value="30" min="1" />
+    
+    <label style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;display:block;">💻 تکنولوژی</label>
+    <select id="subModalTech">
+      <option value="livekit">LiveKit (توصیه می‌شود)</option>
+      <option value="web">وب (WebRTC)</option>
+    </select>
 
+    <label style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;display:block;">👥 حداکثر تعداد دانش‌آموز</label>
+    <input type="number" id="subModalStudents" value="30" min="1" />
+    
+    <label style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;display:block;">📹 حداکثر تعداد دوربین</label>
+    <input type="number" id="subModalCams" value="30" min="1" />
+    
+    <label style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;display:block;">🎤 حداکثر تعداد میکروفون</label>
+    <input type="number" id="subModalMics" value="30" min="1" />
 
+    <div style="margin-top: 20px; display: flex; gap: 10px;">
+      <button onclick="saveAdminSubscription()" style="flex: 1; background: var(--success); margin: 0;">💾 ذخیره و فعال‌سازی</button>
+      <button class="secondary" onclick="closeModal('adminSubModal')" style="flex: 1; margin: 0;">لغو</button>
+    </div>
+  </div>
+</div>
 
+<div id="adminGlobalBanner">
+  <div class="gb-text">
+    <span id="adminGlobalBannerText"></span>
+    <small id="adminGlobalBannerMeta"></small>
+  </div>
+  <button onclick="dismissGlobalBanner()">✕</button>
+</div>
 
 <div id="activityTimerDisplay"></div>
 <div id="reactionsContainer"></div>
 <div id="connBanner"></div>
 <div id="toast"></div>
-<div id="p2pArchitectureNote" style="position:fixed;bottom:8px;right:8px;z-index:4;background:rgba(17,24,39,.72);color:#cbd5e1;padding:4px 8px;border-radius:8px;font:10px Tahoma;pointer-events:none">WebRTC P2P • Max 4 participants • No LiveKit / SFU</div>
 
-
+<!-- کتابخانه‌های اصلی از mirror جایگزین jsDelivr بارگذاری می‌شوند.
+     اگر شبکه این دامنه را مسدود کند، پیام خطا نام دقیق کتابخانهٔ بارگذاری‌نشده را نشان می‌دهد. -->
+<script data-lroom-lib="supabase-js" src="https://gcore.jsdelivr.net/npm/@supabase/supabase-js@2"
+ onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';"></script>
 <script>
-
-
-
 window.onerror = function(msg, url, line, col, error) {
     console.error('[Lroom Error]', msg, 'at', url, ':', line, error);
     const meeting = document.getElementById('meeting');
@@ -835,113 +1084,113 @@ window.onerror = function(msg, url, line, col, error) {
 
 window.addEventListener('unhandledrejection', (e) => { console.error('[Lroom Unhandled]', e.reason); });
 
+const lroomMissingLibraries = [];
+if (!window.supabase || typeof window.supabase.createClient !== 'function') lroomMissingLibraries.push('@supabase/supabase-js');
+// LiveKit is deliberately lazy-loaded only when the user joins a class.
+if (lroomMissingLibraries.length) {
+    const failed = (window.__lroomLoadErrors || []).join('، ') || lroomMissingLibraries.join('، ');
+    document.body.innerHTML = `
+        <div style="color:#fff;background:radial-gradient(circle at 50% 35%,#26345d 0,#202124 55%);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:Tahoma;padding:24px;text-align:center;">
+            <div style="max-width:620px;width:100%;padding:30px;border:1px solid #46516a;border-radius:20px;background:rgba(35,42,60,.72);box-shadow:0 20px 60px #0006">
+              <div style="font-size:42px;margin-bottom:12px">📡</div>
+              <h1 style="color:#fbbc04;margin-bottom:16px;font-size:24px">بارگذاری کتابخانه‌ها ناموفق بود</h1>
+              <p style="font-size:15px;line-height:2;margin-bottom:12px">این فایل برای اجرا به کتابخانه‌های Supabase و LiveKit نیاز دارد، اما مرورگر نتوانست همهٔ آن‌ها را از CDN دریافت کند.</p>
+              <div style="text-align:right;background:#151a27;border:1px solid #3b455c;border-radius:12px;padding:14px;margin:16px 0">
+                <b style="color:#fbbc04">کتابخانه‌های در دسترس‌نبوده:</b>
+                <div style="direction:ltr;text-align:left;font-family:monospace;line-height:2;margin-top:8px;word-break:break-word">${lroomMissingLibraries.map(x => `<div>• ${x}</div>`).join('')}</div>
+                <div style="color:#9aa0a6;font-size:12px;margin-top:8px">خطاهای دریافت: ${failed}</div>
+              </div>
+              <p style="font-size:13px;color:#b7c2d6;line-height:2;margin-bottom:18px">اتصال اینترنت یا VPN را بررسی کنید و صفحه را با Ctrl + Shift + R تازه‌سازی کنید. باز کردن فایل با آدرس file:// به‌تنهایی علت این پیام نیست؛ مشکل از دریافت فایل‌های CDN است.</p>
+              <button onclick="location.reload()" style="padding:12px 24px;background:#8ab4f8;color:#101827;border:0;border-radius:10px;cursor:pointer;font-family:inherit;font-weight:700">تلاش مجدد</button>
+            </div>
+        </div>`;
+    throw new Error('Lroom required libraries missing: ' + lroomMissingLibraries.join(', '));
+}
+
 // ───────────────────────────────────────────────────────────
 // ⚙️ پیکربندی (سرور جدید)
 // ───────────────────────────────────────────────────────────
 const SUPABASE_URL = 'https://txpxfrnolvqpcwdjsbhs.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_zwQudXu8pVQJ1Cz_IjwGXQ_9O67Kyu_';
 
+const LIVEKIT_URL = 'wss://lroom-ga2waw3o.livekit.cloud';
+// LiveKit API key identifier (public ID). Token signing secret stays server-side in Supabase Edge Function Secrets.
+const LIVEKIT_API_KEY = 'APIRuoEKCKzj9S2';
 
+const ADMIN_EMAIL = 'mmastudio.s.m@gmail.com';
+const BALE_ID = '@sobhan101095';
 const DEFAULT_SUBSCRIPTION_DAYS = 20;
 const PROJECTOR_BUCKET = 'projector-media';
+const PHONE_EMAIL_DOMAIN = 'phone.lroom.local';
 
 let sb = null;
-let __lroomSupabasePromise = null;
-function ensureSupabaseClient() {
-    if (sb) return Promise.resolve(sb);
-    if (__lroomSupabasePromise) return __lroomSupabasePromise;
-    __lroomSupabasePromise = new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error('بارگذاری سرویس ورود بیش از حد طول کشید. اینترنت را بررسی و دوباره تلاش کنید.')), 15000);
-        const initialize = () => {
-            try {
-                if (!window.supabase || typeof window.supabase.createClient !== 'function') throw new Error('کتابخانهٔ Supabase در دسترس نیست.');
-                sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-                    auth: { autoRefreshToken: true, persistSession: true, detectSessionInUrl: false, flowType: 'implicit' },
-                    realtime: { params: { eventsPerSecond: 10 } }
-                });
-                clearTimeout(timeout);
-                resolve(sb);
-            } catch (error) { clearTimeout(timeout); reject(error); }
-        };
-        if (window.supabase && typeof window.supabase.createClient === 'function') { initialize(); return; }
-        const sources = [
-            'https://gcore.jsdelivr.net/npm/@supabase/supabase-js@2',
-            'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
-        ];
+try {
+    const supabaseOptions = {
+        auth: { autoRefreshToken: true, persistSession: true, detectSessionInUrl: false, flowType: 'implicit' },
+        realtime: { params: { eventsPerSecond: 2 } }
+    };
+    // Prefer SmartClient when available, otherwise use the official Supabase client.
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, supabaseOptions);
+ } catch (e) { console.error('Supabase init failed:', e); }
+
+// Load the LiveKit browser SDK only when a user actually starts/join a class.
+let __lroomLiveKitPromise = null;
+function loadLroomScript(urls, readyCheck, label, timeoutMs = 7000) {
+    if (readyCheck()) return Promise.resolve();
+    return new Promise((resolve, reject) => {
         let index = 0;
-        const loadNext = () => {
-            if (index >= sources.length) { clearTimeout(timeout); reject(new Error('کتابخانهٔ Supabase از CDN دریافت نشد. اتصال اینترنت یا VPN را بررسی کنید.')); return; }
-            const script = document.createElement('script');
-            script.src = sources[index++];
+        let timer = null;
+        let script = null;
+        const next = (lastError) => {
+            clearTimeout(timer);
+            if (script) { script.onload = null; script.onerror = null; script.remove(); script = null; }
+            if (readyCheck()) { resolve(); return; }
+            if (index >= urls.length) { reject(new Error(label + ' بارگذاری نشد. اتصال اینترنت یا CDN را بررسی کنید.')); return; }
+            script = document.createElement('script');
             script.async = true;
-            script.onload = initialize;
-            script.onerror = loadNext;
+            script.src = urls[index++];
+            script.onload = () => {
+                if (readyCheck()) resolve();
+                else next(new Error('Library global missing'));
+            };
+            script.onerror = () => next(lastError || new Error('CDN request failed'));
             document.head.appendChild(script);
+            timer = setTimeout(() => next(new Error('CDN timeout')), timeoutMs);
         };
-        loadNext();
-    }).catch(error => { __lroomSupabasePromise = null; throw error; });
-    return __lroomSupabasePromise;
+        next();
+    });
+}
+function ensureLiveKitClient() {
+    if (window.LivekitClient && typeof window.LivekitClient.Room === 'function') return Promise.resolve(window.LivekitClient);
+    if (!__lroomLiveKitPromise) {
+        __lroomLiveKitPromise = loadLroomScript([
+            'https://gcore.jsdelivr.net/npm/livekit-client@2.5.7/dist/livekit-client.umd.min.js',
+            'https://cdn.jsdelivr.net/npm/livekit-client@2.5.7/dist/livekit-client.umd.min.js',
+            'https://unpkg.com/livekit-client@2.5.7/dist/livekit-client.umd.min.js'
+        ], () => !!(window.LivekitClient && typeof window.LivekitClient.Room === 'function'), 'LiveKit', 8000)
+        .then(() => window.LivekitClient)
+        .catch(error => { __lroomLiveKitPromise = null; throw error; });
+    }
+    return __lroomLiveKitPromise;
+}
+let __lroomTrackProcessorPromise = null;
+function ensureLiveKitTrackProcessors() {
+    const ready = () => !!(window.LivekitTrackProcessors || window.LiveKitTrackProcessors || window.livekitTrackProcessors);
+    if (ready()) return Promise.resolve();
+    if (!__lroomTrackProcessorPromise) {
+        __lroomTrackProcessorPromise = loadLroomScript([
+            'https://gcore.jsdelivr.net/npm/@livekit/track-processors@latest/dist/track-processors.umd.min.js',
+            'https://cdn.jsdelivr.net/npm/@livekit/track-processors@latest/dist/track-processors.umd.min.js',
+            'https://unpkg.com/@livekit/track-processors@latest/dist/track-processors.umd.min.js'
+        ], ready, 'کتابخانهٔ پردازش تصویر', 8000)
+        .catch(error => { __lroomTrackProcessorPromise = null; throw error; });
+    }
+    return __lroomTrackProcessorPromise;
 }
 
 let currentUser = null;
-let roomChannel = null; // Supabase Realtime is used only for WebRTC signaling/presence.
+let livekitRoom = null;
 let localStream = null;
-// Pure WebRTC mesh: audio, video, screen sharing, chat and classroom controls
-// travel directly between authenticated peers. Supabase carries SDP/ICE signaling only.
-const P2P_MAX_PARTICIPANTS = 4; // Pure full-mesh P2P is best kept to small rooms.
-const p2pPeers = new Map();
-const p2pRemoteAudio = new Map();
-const p2pRemoteScreenStreamIds = new Map();
-let p2pRoomRoster = new Map();
-let localP2PScreenStream = null;
-let mediaTransportMode = 'p2p';
-let p2pFallbackReason = '';
-let roomPresenceSyncInFlight = false;
-function getP2PIceServers() {
-    const servers = [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun.cloudflare.com:3478' }
-    ];
-    // Production must supply TURN credentials through deployment config, never hard-code them here.
-    const turn = window.LROOM_TURN_CONFIG;
-    if (turn && turn.urls && turn.username && turn.credential) {
-        servers.push({ urls: turn.urls, username: turn.username, credential: turn.credential });
-    }
-    return servers;
-}
-async function loadP2PTurnConfig() {
-    if (window.LROOM_TURN_CONFIG || !sb) return;
-    try {
-        const { data, error } = await sb.auth.getSession();
-        const accessToken = data?.session?.access_token;
-        if (error || !accessToken) return;
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 2800);
-        try {
-            const response = await fetch(`${SUPABASE_URL}/functions/v1/turn-credentials`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}` },
-                body: '{}', signal: controller.signal
-            });
-            const result = await response.json().catch(() => ({}));
-            if (response.ok && result.iceServer?.urls && result.iceServer?.username && result.iceServer?.credential) {
-                window.LROOM_TURN_CONFIG = result.iceServer;
-            } else if (!response.ok && response.status !== 404) {
-                console.warn('[Lroom P2P] TURN credentials unavailable:', result.error || response.status);
-            }
-        } finally { clearTimeout(timeout); }
-    } catch (error) {
-        console.warn('[Lroom P2P] TURN credentials unavailable; attempting direct STUN connectivity only.', error);
-    }
-}
-function updateMediaTransportBadge() {
-    const badge = document.getElementById('mediaModeBadge');
-    if (!badge) return;
-    badge.textContent = 'P2P DIRECT';
-    badge.classList.remove('sfu');
-    badge.title = 'Audio, video and screen media are sent directly peer-to-peer using WebRTC. Supabase is used only for signaling and presence.';
-}
-
 let myName = '', myRole = '', roomId = '', myId = '', teacherId = '';
 let selectedLobbyRole = 'teacher';
 let qualitySettings = { studentCam: 'auto', screenShare: 'auto', projector: 'auto' };
@@ -967,6 +1216,13 @@ let wbIsDrawing = false, wbLastX = 0, wbLastY = 0;
 let wbPenColor = '#000000', wbPenSize = 4;
 let wbStrokes = [], wbCurrentStroke = null;
 
+let mediaRecorder = null, recordedChunks = [];
+let isRecording = false, recordingStartTime = 0;
+let recordingTimerInterval = null;
+let compositeCanvas = null, compositeCtx = null;
+let compositeAnimationId = null;
+let audioContext = null, audioDestination = null;
+let recordingBlob = null, recordingMimeType = 'video/webm';
 
 let currentChatTab = 'public';
 let projCanvas = null, projCtx = null, projVideo = null, projImage = null;
@@ -982,36 +1238,21 @@ let qualityCheckInterval = null;
 const qualityCache = new Map();
 let stats = { userStats: new Map(), startTime: 0 };
 let bellAudioCtx = null;
-const lroomStorage = (() => {
-    try {
-        const storage = window.localStorage;
-        const probe = '__lroom_storage_test__';
-        storage.setItem(probe, '1');
-        storage.removeItem(probe);
-        return storage;
-    } catch (error) {
-        const memory = new Map();
-        return {
-            getItem: key => memory.has(String(key)) ? memory.get(String(key)) : null,
-            setItem: (key, value) => memory.set(String(key), String(value)),
-            removeItem: key => memory.delete(String(key))
-        };
-    }
-})();
-
-let currentTheme = lroomStorage.getItem('lroom_theme') || 'dark';
+let currentTheme = localStorage.getItem('lroom_theme') || 'dark';
 let waitingList = new Map();
 let isWaitingForApproval = false;
-let studentApprovalTimer = null;
-let studentApprovalPollBusy = false;
-let teacherWaitingTimer = null;
 let pendingPermissionRequest = null;
+let adminActiveAnnouncement = null;
+let realtimeChannel = null;
 let waitingAudioBlockInterval = null;
 let isGuestMode = false;
 let guestName = '';
 let spotlightedId = null;
 let spotlightModeActive = false;
+let blurProcessor = null;
+let isBlurEnabled = false;
 let connectBarTimer = null;
+let currentAuthMethod = 'email';
 
 const DAY_MS = 86400000;
 
@@ -1097,7 +1338,7 @@ const I18N = {
         joinRoomHint:'پس از وارد کردن کد، روی «ورود به جلسه» کلیک کنید.',
         lobbyHint:'💡 کد جلسه خود را برای دانشجویان بفرستید.',
         joinMeeting:'ورود به جلسه', subscriptionStatus:'💳 وضعیت اشتراک',
-        enterGiftCode:'🎁 وارد کردن کد هدیه',
+        enterGiftCode:'🎁 وارد کردن کد هدیه', adminPanelMenu:'👑 پنل مدیریت',
         logoutMenu:'🚪 خروج', giftCodeTitle:'کد هدیه',
         giftCodeDesc:'کد هدیه خود را وارد کنید', activateGift:'🎁 فعال کردن',
         cancel:'لغو', expiredTitle:'⛔ اعتبار شما تمام شده است',
@@ -1114,7 +1355,7 @@ const I18N = {
         sessionCodeHint:'Fixed code', joinRoomLabel:'🔑 Get code from teacher',
         joinRoomHint:'Click Join', lobbyHint:'💡 Send code to students',
         joinMeeting:'Join', subscriptionStatus:'💳 Subscription',
-        enterGiftCode:'🎁 Gift code',
+        enterGiftCode:'🎁 Gift code', adminPanelMenu:'👑 Admin',
         logoutMenu:'🚪 Logout', giftCodeTitle:'Gift Code',
         giftCodeDesc:'Enter gift code', activateGift:'🎁 Activate',
         cancel:'Cancel', expiredTitle:'⛔ Expired', expiredUser:'Dear user',
@@ -1130,7 +1371,7 @@ const I18N = {
         sessionCodeHint:'ثابت', joinRoomLabel:'🔑 احصل على الرمز',
         joinRoomHint:'انقر', lobbyHint:'💡 أرسل رمزك',
         joinMeeting:'الانضمام', subscriptionStatus:'💳 الاشتراك',
-        enterGiftCode:'🎁 كود',
+        enterGiftCode:'🎁 كود', adminPanelMenu:'👑 الإدارة',
         logoutMenu:'🚪 خروج', giftCodeTitle:'كود الهدية',
         giftCodeDesc:'أدخل الكود', activateGift:'🎁 تفعيل',
         cancel:'إلغاء', expiredTitle:'⛔ انتهى', expiredUser:'عزيزي',
@@ -1141,14 +1382,12 @@ const I18N = {
         connConnected:'✅ متصل', connLost:'⚠️ قطع', langChanged:'🌍 تغييرت اللغة'
     }
 };
-const browserLocale = (navigator.languages && navigator.languages[0] || navigator.language || 'en').toLowerCase().split('-')[0];
-const detectedLocale = ['fa','ar','en'].includes(browserLocale) ? browserLocale : 'en';
-let currentLang = lroomStorage.getItem('lroom_lang') || detectedLocale;
+let currentLang = localStorage.getItem('lroom_lang') || 'fa';
 function t(key) { return (I18N[currentLang] && I18N[currentLang][key]) || I18N.fa[key] || key; }
 
 function applyLanguage(lang) {
     currentLang = lang;
-    lroomStorage.setItem('lroom_lang', lang);
+    localStorage.setItem('lroom_lang', lang);
     const L = I18N[lang] || I18N.fa;
     const setTxt = (sel, txt) => { const el = document.querySelector(sel); if (el && txt != null) el.textContent = txt; };
     try {
@@ -1162,8 +1401,7 @@ function applyLanguage(lang) {
         const jb = document.getElementById('joinBtn');
         if (jb && !jb.disabled) jb.textContent = L.joinMeeting;
         document.documentElement.lang = lang;
-        document.documentElement.dir = (lang === 'fa' || lang === 'ar') ? 'rtl' : 'ltr';
-        const langSelect = document.getElementById('langSelect'); if (langSelect) langSelect.value = lang;
+        document.documentElement.dir = (lang === 'en') ? 'ltr' : 'rtl';
     } catch (e) {}
 }
 function changeLanguage(l) { applyLanguage(l); showToast(t('langChanged')); }
@@ -1171,7 +1409,7 @@ function changeLanguage(l) { applyLanguage(l); showToast(t('langChanged')); }
 function toggleTheme() {
     currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
     document.body.classList.toggle('light-theme', currentTheme === 'light');
-    lroomStorage.setItem('lroom_theme', currentTheme);
+    localStorage.setItem('lroom_theme', currentTheme);
     const i = currentTheme === 'light' ? '☀️' : '🌙';
     const t1 = document.getElementById('themeToggle');
     if (t1) t1.textContent = i;
@@ -1179,7 +1417,7 @@ function toggleTheme() {
     if (t2) t2.textContent = i;
 }
 function changeDevice(mode) {
-    lroomStorage.setItem('lroom_device', mode);
+    localStorage.setItem('lroom_device', mode);
     document.body.classList.remove('device-phone', 'device-tablet', 'device-laptop');
     if (mode === 'phone') document.body.classList.add('device-phone');
     else if (mode === 'tablet') document.body.classList.add('device-tablet');
@@ -1306,7 +1544,7 @@ async function retryCameraPermission() {
         showToast('✅ دسترسی داده شد');
         const jbtn = document.getElementById('joinBtn');
         if (jbtn) { jbtn.disabled = false; jbtn.textContent = I18N[currentLang].joinMeeting; }
-        if (!roomChannel) {
+        if (!livekitRoom) {
             try { await joinMeeting(); } catch(e) { console.error(e); }
         }
     } else {
@@ -1438,23 +1676,85 @@ function isSlowConnection() {
         return false;
     } catch (e) { return false; }
 }
-async function checkRealConnectionQuality() {
-    if (!roomChannel || !p2pPeers.size) return;
-    let worstRttMs = 0;
-    for (const state of p2pPeers.values()) {
-        try {
-            const stats = await state.pc.getStats();
-            stats.forEach(report => {
-                if (report.type === 'candidate-pair' && report.state === 'succeeded' && report.nominated && typeof report.currentRoundTripTime === 'number') {
-                    worstRttMs = Math.max(worstRttMs, report.currentRoundTripTime * 1000);
-                }
-            });
-        } catch (e) {}
-    }
-    if (worstRttMs > 600 && !isLowBandwidth) showToast('📶 تأخیر اتصال زیاد است؛ حالت کم‌مصرف را فعال کنید.');
+function checkRealConnectionQuality() {
+    if (!livekitRoom || !livekitRoom.engine) return;
+    try {
+        let rtt = 0;
+        if (livekitRoom.engine.client && typeof livekitRoom.engine.client.rtt === 'number') rtt = livekitRoom.engine.client.rtt;
+        if (rtt > 600 && !isLowBandwidth) showToast('📶 اتصال کند — می‌توانید حالت کم‌مصرف را فعال کنید');
+    } catch (e) {}
 }
 
+// LiveKit tokens are signed on the server. Never put LIVEKIT_API_SECRET in this file.
+async function requestLiveKitToken(roomName, identity, name, role) {
+    if (!['teacher', 'student'].includes(role)) throw new Error('نقش ورود معتبر نیست.');
+    if (!roomName || !identity) throw new Error('اطلاعات اتاق کامل نیست.');
 
+    const headers = {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'x-livekit-api-key': LIVEKIT_API_KEY
+    };
+
+    // Signed-in and anonymous users both have Supabase access tokens.
+    // The Edge Function verifies the token and only permits anonymous students.
+    if (isGuestMode && role !== 'student') throw new Error('مهمان فقط می‌تواند به‌عنوان دانشجو وارد شود.');
+    const { data, error } = await sb.auth.getSession();
+    if (error) throw new Error(error.message || 'نشست کاربری قابل دریافت نیست.');
+    const accessToken = data?.session?.access_token;
+    if (!accessToken) throw new Error('نشست شما منقضی شده؛ دوباره وارد شوید.');
+    headers.Authorization = `Bearer ${accessToken}`;
+
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/livekit-token`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ room: roomName, identity, name, role })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || typeof result.token !== 'string' || !result.token) {
+        throw new Error(result.error || `صدور توکن ناموفق بود (${response.status}).`);
+    }
+    return result.token;
+}
+
+function normalizePhone(input) {
+    let p = String(input || '').trim().replace(/[\s\-\(\)]/g, '');
+    p = p.replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+         .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+    if (p.startsWith('+98')) return p;
+    if (p.startsWith('0098')) return '+98' + p.slice(4);
+    if (p.startsWith('98') && p.length >= 12) return '+' + p;
+    if (p.startsWith('0')) return '+98' + p.slice(1);
+    if (p.length === 10) return '+98' + p;
+    return p.startsWith('+') ? p : '+' + p;
+}
+function phoneToFakeEmail(phone) {
+    const digits = phone.replace(/\D/g, '');
+    return `p${digits}@${PHONE_EMAIL_DOMAIN}`;
+}
+function switchAuthMethod(method) {
+    currentAuthMethod = method;
+    const eBtn = document.getElementById('methodBtnEmail');
+    const pBtn = document.getElementById('methodBtnPhone');
+    if (eBtn) eBtn.classList.toggle('active', method === 'email');
+    if (pBtn) pBtn.classList.toggle('active', method === 'phone');
+    const eSec = document.getElementById('emailAuthSection');
+    const pSec = document.getElementById('phoneAuthSection');
+    if (eSec) eSec.style.display = method === 'email' ? 'block' : 'none';
+    if (pSec) pSec.style.display = method === 'phone' ? 'block' : 'none';
+}
+function switchPhoneTab(tab) {
+    const lT = document.getElementById('phoneTabLogin');
+    const rT = document.getElementById('phoneTabRegister');
+    const lF = document.getElementById('phoneLoginForm');
+    const rF = document.getElementById('phoneRegisterForm');
+    if (lT) lT.classList.toggle('active', tab === 'login');
+    if (rT) rT.classList.toggle('active', tab === 'register');
+    if (lF) lF.style.display = tab === 'login' ? 'block' : 'none';
+    if (rF) rF.style.display = tab === 'register' ? 'block' : 'none';
+    const le = document.getElementById('phoneLoginError'); if (le) le.classList.remove('show');
+    const re = document.getElementById('phoneRegError'); if (re) re.classList.remove('show');
+}
 function switchAuthTab(tab) {
     const lT = document.getElementById('tabLogin');
     const rT = document.getElementById('tabRegister');
@@ -1468,234 +1768,238 @@ function switchAuthTab(tab) {
     const re = document.getElementById('regError'); if (re) re.classList.remove('show');
 }
 
-async function checkGiftCode(code) {
-    const { data, error } = await sb.rpc('check_discount_code', { p_code: code });
-    if (error) throw new Error(error.message || 'بررسی کد هدیه ناموفق بود');
-    const row = Array.isArray(data) ? data[0] : data;
-    if (!row || !row.is_valid) {
-        if (row?.message === 'exhausted') throw new Error('ظرفیت استفاده از این کد تمام شده است');
-        throw new Error('کد هدیه معتبر نیست');
-    }
-    return row;
-}
-
-async function redeemGiftCode(code) {
-    const { data, error } = await sb.rpc('redeem_discount_code', { p_code: code });
-    if (error) throw new Error(error.message || 'اعمال کد هدیه ناموفق بود');
-    const row = Array.isArray(data) ? data[0] : data;
-    if (!row) throw new Error('پاسخ سرور برای کد هدیه خالی بود');
-    return row;
-}
-
-async function redeemPendingGiftCode() {
-    const code = (lroomStorage.getItem('lroom_pending_gift_code') || '').trim().toUpperCase();
-    if (!code || !currentUser || isGuestMode) return false;
-    try {
-        const result = await redeemGiftCode(code);
-        lroomStorage.removeItem('lroom_pending_gift_code');
-        currentUser.subscriptionEnd = result.subscription_end;
-        const daysLeft = calcDaysLeft(currentUser.subscriptionEnd);
-        const daysEl = document.getElementById('userBadgeDays');
-        if (daysEl) daysEl.textContent = `(${daysLeft} روز مانده)`;
-        showToast(`🎁 ${result.days_added} روز هدیه به اشتراک اضافه شد`);
-        return true;
-    } catch (error) {
-        console.warn('[Lroom] Pending gift code not redeemed:', error);
-        showToast('⚠️ کد هدیه ذخیره شده؛ پس از بررسی دوباره تلاش می‌شود.');
-        return false;
-    }
-}
-
-async function ensureLroomProfile(authUser) {
-    if (!sb) throw new Error('اتصال به Supabase برقرار نیست. اتصال اینترنت و کلید پروژه را بررسی کنید.');
-    if (!authUser || !authUser.id) throw new Error('اطلاعات حساب کاربری از Supabase دریافت نشد.');
-
-    const { data: existing, error: readError } = await sb
-        .from('profiles').select('*').eq('id', authUser.id).maybeSingle();
-    if (readError) throw new Error('خواندن پروفایل ناموفق بود: ' + readError.message);
-    if (existing) return existing;
-
-    const rawName = authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'کاربر';
-    const safeName = String(rawName).trim().slice(0, 60) || 'کاربر';
-    const profileRow = {
-        id: authUser.id,
-        email: authUser.email || '',
-        name: safeName,
-        role: 'user',
-        subscription_end: calcEndDateFromNow(DEFAULT_SUBSCRIPTION_DAYS).toISOString()
-    };
-
-    const { data: inserted, error: insertError } = await sb
-        .from('profiles').insert(profileRow).select('*').single();
-    if (!insertError && inserted) return inserted;
-
-    // A database trigger may have inserted the profile at the same time.
-    const { data: afterRace, error: retryError } = await sb
-        .from('profiles').select('*').eq('id', authUser.id).maybeSingle();
-    if (!retryError && afterRace) return afterRace;
-
-    const reason = insertError?.message || retryError?.message || 'خطای نامشخص';
-    throw new Error('پروفایل ساخته نشد. مجوز INSERT جدول profiles یا تریگر ثبت‌نام را بررسی کنید. جزئیات: ' + reason);
-}
-
 async function handleRegister(e) {
-    if (e?.preventDefault) e.preventDefault();
-    const nameEl = document.getElementById('regName');
-    const emailEl = document.getElementById('regEmail');
-    const passwordEl = document.getElementById('regPassword');
+    e.preventDefault();
+    const name = document.getElementById('regName').value.trim();
+    const email = document.getElementById('regEmail').value.trim().toLowerCase();
+    const password = document.getElementById('regPassword').value;
+    const discCode = (document.getElementById('regDiscountCode')?.value || '').trim().toUpperCase();
     const errEl = document.getElementById('regError');
     const okEl = document.getElementById('regSuccess');
     const btn = document.getElementById('regBtn');
-    if (!nameEl || !emailEl || !passwordEl || !errEl || !okEl || !btn) {
-        console.error('[Lroom Auth] Registration form elements missing.');
-        return;
-    }
-
-    const name = nameEl.value.trim();
-    const email = emailEl.value.trim().toLowerCase();
-    const password = passwordEl.value;
-    const discCode = (document.getElementById('regDiscountCode')?.value || '').trim().toUpperCase();
-    errEl.textContent = '';
     errEl.classList.remove('show');
-    okEl.textContent = '';
     okEl.classList.remove('show');
-
-    if (name.length < 2) {
-        errEl.textContent = 'نام و نام خانوادگی را وارد کنید.';
-        errEl.classList.add('show');
-        nameEl.focus();
-        return;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        errEl.textContent = 'آدرس ایمیل معتبر وارد کنید.';
-        errEl.classList.add('show');
-        emailEl.focus();
-        return;
-    }
-    if (password.length < 8) {
-        errEl.textContent = 'رمز عبور باید حداقل ۸ کاراکتر باشد.';
-        errEl.classList.add('show');
-        passwordEl.focus();
-        return;
-    }
-
-    btn.disabled = true;
-    btn.textContent = 'در حال ساخت حساب...';
+    if (!name || name.length < 2) { errEl.textContent = '⚠️ نام را وارد کنید'; errEl.classList.add('show'); return; }
+    if (password.length < 6) { errEl.textContent = '⚠️ رمز حداقل ۶ کاراکتر'; errEl.classList.add('show'); return; }
+    btn.disabled = true; btn.textContent = '⏳...';
     try {
-        await ensureSupabaseClient();
-        if (discCode) await checkGiftCode(discCode);
-
-        const { data: authData, error: authError } = await sb.auth.signUp({
-            email,
-            password,
-            options: { data: { name } }
-        });
-        if (authError) throw new Error(authError.message);
-        if (!authData?.user) throw new Error('Supabase حساب کاربری را ایجاد نکرد.');
-
-        if (!authData.session) {
-            okEl.textContent = 'حساب ایجاد شده، اما تأیید ایمیل هنوز در Supabase اجباری است. برای ورود بدون ایمیل، در Authentication → Sign In / Providers → Email گزینهٔ Confirm email را خاموش کنید. سپس با همین ایمیل وارد شوید.';
-            okEl.classList.add('show');
-            return;
-        }
-
-        const profile = await ensureLroomProfile(authData.user);
-        currentUser = {
-            id: profile.id,
-            email: profile.email || authData.user.email,
-            name: profile.name || name,
-            role: profile.role || 'user',
-            sessionCode: profile.session_code || null,
-            subscriptionEnd: profile.subscription_end
-        };
-        isGuestMode = false;
-        guestName = '';
-
-        let giftText = '';
+        let disc = null, discUsedCount = 0;
         if (discCode) {
-            try {
-                const gift = await redeemGiftCode(discCode);
-                currentUser.subscriptionEnd = gift.subscription_end || currentUser.subscriptionEnd;
-                giftText = ` کد هدیه با موفقیت اعمال شد (${gift.days_added} روز).`;
-            } catch (giftError) {
-                lroomStorage.setItem('lroom_pending_gift_code', discCode);
-                giftText = ' کد هدیه ذخیره شد و پس از آماده‌شدن سرویس هدیه قابل اعمال است.';
-                console.warn('[Lroom Gift]', giftError);
-            }
+            const { data: d } = await sb.from('discount_codes').select('*').eq('code', discCode).maybeSingle();
+            if (!d) throw new Error('کد هدیه نامعتبر');
+            discUsedCount = (d.used_by || []).length;
+            if (d.max_uses > 0 && discUsedCount >= d.max_uses) throw new Error('کد هدیه تمام شده');
+            disc = d;
         }
-
-        checkAndShow();
-        showToast('✅ حساب ساخته شد و وارد Lroom شدید.' + giftText);
-        try { await loadLroomClassFeatures(); }
-        catch (classError) { console.error('[Lroom class module]', classError); showToast('ورود انجام شد، اما بخش کلاس آماده نشد. صفحه را تازه‌سازی کنید.'); }
-    } catch (error) {
-        console.error('[Lroom Register]', error);
-        errEl.textContent = '❌ ' + (error?.message || 'ثبت‌نام ناموفق بود.');
+        const { data: authData, error: authErr } = await sb.auth.signUp({ email, password, options: { data: { name } } });
+        if (authErr) throw new Error(authErr.message);
+        if (!authData.user) throw new Error('خطا در ساخت حساب');
+        if (!authData.session) throw new Error('تنظیمات تأیید ایمیل در Supabase باید خاموش شود');
+        await new Promise(r => setTimeout(r, 1500));
+        let { data: prof } = await sb.from('profiles').select('*').eq('id', authData.user.id).maybeSingle();
+        if (!prof) {
+            const endDate = calcEndDateFromNow(DEFAULT_SUBSCRIPTION_DAYS);
+            await sb.from('profiles').insert({
+                id: authData.user.id,
+                email: authData.user.email,
+                name: name,
+                role: email.toLowerCase() === ADMIN_EMAIL.toLowerCase() ? 'admin' : 'user',
+                subscription_end: endDate.toISOString()
+            });
+            const r2 = await sb.from('profiles').select('*').eq('id', authData.user.id).maybeSingle();
+            prof = r2.data;
+        }
+        if (disc && prof) {
+            const base = getRenewalBase(prof.subscription_end);
+            const newEnd = addDaysSafe(base, disc.days);
+            await sb.from('profiles').update({ subscription_end: newEnd.toISOString() }).eq('id', authData.user.id);
+            await sb.from('discount_codes').update({
+                used_count: discUsedCount + 1,
+                used_by: [...(disc.used_by || []), authData.user.id]
+            }).eq('id', disc.id);
+        }
+        try { await sb.auth.signOut(); } catch (e) {}
+        okEl.textContent = '✅ ثبت‌نام موفق!' + (disc ? ` ${disc.days} روز هدیه اضافه شد.` : '');
+        okEl.classList.add('show');
+        setTimeout(() => {
+            switchAuthTab('login');
+            document.getElementById('loginEmail').value = email;
+        }, 2500);
+    } catch (err) {
+        errEl.textContent = '❌ ' + (err.message || 'خطا');
         errEl.classList.add('show');
     } finally {
-        btn.disabled = false;
-        btn.textContent = 'ثبت‌نام';
+        if (btn) { btn.disabled = false; btn.textContent = 'ثبت‌نام'; }
     }
 }
 
 async function handleLogin(e) {
-    if (e?.preventDefault) e.preventDefault();
-    const emailEl = document.getElementById('loginEmail');
-    const passwordEl = document.getElementById('loginPassword');
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+    const password = document.getElementById('loginPassword').value;
     const errEl = document.getElementById('loginError');
     const btn = document.getElementById('loginBtn');
-    if (!emailEl || !passwordEl || !errEl || !btn) {
-        console.error('[Lroom Auth] Login form elements missing.');
-        return;
-    }
-
-    const email = emailEl.value.trim().toLowerCase();
-    const password = passwordEl.value;
-    errEl.textContent = '';
     errEl.classList.remove('show');
-    if (!email || !password) {
-        errEl.textContent = 'ایمیل و رمز عبور را وارد کنید.';
-        errEl.classList.add('show');
-        return;
-    }
-
-    btn.disabled = true;
-    btn.textContent = 'در حال ورود...';
+    btn.disabled = true; btn.textContent = '⏳...';
     try {
-        await ensureSupabaseClient();
         const { data, error } = await sb.auth.signInWithPassword({ email, password });
-        if (error) {
-            const message = error.message || 'ورود ناموفق بود.';
-            if (/email not confirmed/i.test(message)) {
-                throw new Error('ایمیل این حساب هنوز تأیید نشده است. برای ورود بدون تأیید ایمیل، Confirm email را در تنظیمات Email Auth خاموش کنید؛ حساب‌های قبلیِ تأییدنشده ممکن است نیاز به تأیید یا ساخت حساب جدید داشته باشند.');
-            }
-            throw new Error(message);
+        if (error) throw new Error(error.message);
+        if (!data.user) throw new Error('کاربر یافت نشد');
+        let { data: profile } = await sb.from('profiles').select('*').eq('id', data.user.id).maybeSingle();
+        if (!profile) {
+            const endDate = calcEndDateFromNow(DEFAULT_SUBSCRIPTION_DAYS);
+            await sb.from('profiles').insert({
+                id: data.user.id,
+                email: data.user.email,
+                name: data.user.user_metadata?.name || 'User',
+                role: data.user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase() ? 'admin' : 'user',
+                subscription_end: endDate.toISOString()
+            });
+            const r2 = await sb.from('profiles').select('*').eq('id', data.user.id).maybeSingle();
+            profile = r2.data;
         }
-        if (!data?.user) throw new Error('کاربر از Supabase دریافت نشد.');
-
-        // Recover the profile automatically if the optional Phase 2 trigger is absent.
-        const profile = await ensureLroomProfile(data.user);
+        if (!profile) throw new Error('پروفایل یافت نشد');
         currentUser = {
-            id: profile.id,
-            email: profile.email || data.user.email,
-            name: profile.name || data.user.user_metadata?.name || email.split('@')[0],
-            role: profile.role || 'user',
-            sessionCode: profile.session_code || null,
+            id: profile.id, email: profile.email, name: profile.name,
+            role: profile.role, sessionCode: profile.session_code,
             subscriptionEnd: profile.subscription_end
         };
         isGuestMode = false;
-        guestName = '';
-        await redeemPendingGiftCode();
         checkAndShow();
-        try { await loadLroomClassFeatures(); }
-        catch (classError) { console.error('[Lroom class module]', classError); showToast('ورود انجام شد، اما بخش کلاس آماده نشد. صفحه را تازه‌سازی کنید.'); }
-    } catch (error) {
-        console.error('[Lroom Login]', error);
-        errEl.textContent = '❌ ' + (error?.message || 'ورود ناموفق بود.');
+        initRealtime();
+        loadActiveAnnouncement();
+    } catch (err) {
+        errEl.textContent = '❌ ' + (err.message || 'خطا');
         errEl.classList.add('show');
     } finally {
-        btn.disabled = false;
-        btn.textContent = 'ورود';
+        if (btn) { btn.disabled = false; btn.textContent = 'ورود'; }
+    }
+}
+
+async function handlePhoneLogin(e) {
+    e.preventDefault();
+    const phoneRaw = document.getElementById('phoneLoginInput').value;
+    const password = document.getElementById('phoneLoginPassword').value;
+    const errEl = document.getElementById('phoneLoginError');
+    const btn = document.getElementById('phoneLoginBtn');
+    errEl.classList.remove('show');
+    const phone = normalizePhone(phoneRaw);
+    if (!/^\+98\d{10}$/.test(phone)) {
+        errEl.textContent = '⚠️ شماره معتبر نیست (مثال: 09123456789)';
+        errEl.classList.add('show');
+        return;
+    }
+    btn.disabled = true; btn.textContent = '⏳...';
+    try {
+        const email = phoneToFakeEmail(phone);
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) throw new Error('شماره یا رمز عبور اشتباه است');
+        if (!data.user) throw new Error('کاربر یافت نشد');
+        let { data: profile } = await sb.from('profiles').select('*').eq('id', data.user.id).maybeSingle();
+        if (!profile) throw new Error('پروفایل یافت نشد');
+        currentUser = {
+            id: profile.id, email: profile.email, name: profile.name,
+            role: profile.role, sessionCode: profile.session_code,
+            subscriptionEnd: profile.subscription_end
+        };
+        isGuestMode = false;
+        showToast('✅ ورود موفق');
+        checkAndShow();
+        initRealtime();
+        loadActiveAnnouncement();
+    } catch (err) {
+        errEl.textContent = '❌ ' + (err.message || 'خطا');
+        errEl.classList.add('show');
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'ورود'; }
+    }
+}
+
+async function handlePhoneRegister(e) {
+    e.preventDefault();
+    const name = document.getElementById('phoneRegName').value.trim();
+    const phoneRaw = document.getElementById('phoneRegInput').value;
+    const password = document.getElementById('phoneRegPassword').value;
+    const discCode = (document.getElementById('phoneRegDiscountCode')?.value || '').trim().toUpperCase();
+    const errEl = document.getElementById('phoneRegError');
+    const okEl = document.getElementById('phoneRegSuccess');
+    const btn = document.getElementById('phoneRegBtn');
+    errEl.classList.remove('show');
+    okEl.classList.remove('show');
+    const phone = normalizePhone(phoneRaw);
+    if (!name || name.length < 2) { errEl.textContent = '⚠️ نام را وارد کنید'; errEl.classList.add('show'); return; }
+    if (!/^\+98\d{10}$/.test(phone)) { errEl.textContent = '⚠️ شماره معتبر نیست'; errEl.classList.add('show'); return; }
+    if (password.length < 6) { errEl.textContent = '⚠️ رمز حداقل ۶ کاراکتر'; errEl.classList.add('show'); return; }
+    btn.disabled = true; btn.textContent = '⏳...';
+    try {
+        const { data: existing } = await sb.from('profiles').select('id').eq('phone', phone).maybeSingle();
+        if (existing) throw new Error('این شماره قبلاً ثبت شده. وارد شوید.');
+        let disc = null, discUsedCount = 0;
+        if (discCode) {
+            const { data: d } = await sb.from('discount_codes').select('*').eq('code', discCode).maybeSingle();
+            if (!d) throw new Error('کد هدیه نامعتبر');
+            discUsedCount = (d.used_by || []).length;
+            if (d.max_uses > 0 && discUsedCount >= d.max_uses) throw new Error('کد هدیه تمام شده');
+            disc = d;
+        }
+        const email = phoneToFakeEmail(phone);
+        const { data: authData, error: authErr } = await sb.auth.signUp({ email, password, options: { data: { name, phone } } });
+        if (authErr) throw new Error(authErr.message);
+        if (!authData.user) throw new Error('خطا در ساخت حساب');
+        if (!authData.session) throw new Error('تنظیمات تأیید ایمیل در Supabase باید خاموش شود');
+        await new Promise(r => setTimeout(r, 1000));
+        let { data: prof } = await sb.from('profiles').select('*').eq('id', authData.user.id).maybeSingle();
+        if (!prof) {
+            const endDate = calcEndDateFromNow(DEFAULT_SUBSCRIPTION_DAYS);
+            const insertData = {
+                id: authData.user.id, email: email, name: name,
+                role: 'user', phone: phone, subscription_end: endDate.toISOString()
+            };
+            const { error: insErr } = await sb.from('profiles').insert(insertData);
+            if (insErr) {
+                if ((insErr.message || '').toLowerCase().includes('phone')) {
+                    delete insertData.phone;
+                    await sb.from('profiles').insert(insertData);
+                } else { throw new Error(insErr.message); }
+            }
+            const r2 = await sb.from('profiles').select('*').eq('id', authData.user.id).maybeSingle();
+            prof = r2.data;
+        }
+        if (disc && prof) {
+            const base = getRenewalBase(prof.subscription_end);
+            const newEnd = addDaysSafe(base, disc.days);
+            await sb.from('profiles').update({ subscription_end: newEnd.toISOString() }).eq('id', authData.user.id);
+            await sb.from('discount_codes').update({
+                used_count: discUsedCount + 1,
+                used_by: [...(disc.used_by || []), authData.user.id]
+            }).eq('id', disc.id);
+        }
+        okEl.textContent = '✅ ثبت‌نام موفق!' + (disc ? ` ${disc.days} روز هدیه اضافه شد.` : '');
+        okEl.classList.add('show');
+        setTimeout(async () => {
+            try {
+                const { data: loginData } = await sb.auth.signInWithPassword({ email, password });
+                if (loginData?.user) {
+                    const { data: profile } = await sb.from('profiles').select('*').eq('id', loginData.user.id).maybeSingle();
+                    if (profile) {
+                        currentUser = {
+                            id: profile.id, email: profile.email, name: profile.name,
+                            role: profile.role, sessionCode: profile.session_code,
+                            subscriptionEnd: profile.subscription_end
+                        };
+                        isGuestMode = false;
+                        checkAndShow();
+                        initRealtime();
+                        loadActiveAnnouncement();
+                    }
+                }
+            } catch (e) {}
+        }, 1500);
+    } catch (err) {
+        errEl.textContent = '❌ ' + (err.message || 'خطا');
+        errEl.classList.add('show');
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'ثبت‌نام'; }
     }
 }
 
@@ -1705,31 +2009,39 @@ async function applyDiscountCode(inputId) {
     if (!input) return;
     const code = (input.value || '').trim().toUpperCase();
     if (!code) return showToast('⚠️ کد را وارد کنید');
-    try {
-        const result = await checkGiftCode(code);
-        showToast(`✅ ${result.days} روز هدیه`);
-    } catch (error) {
-        showToast('❌ ' + error.message);
-    }
+    const { data: d, error } = await sb.from('discount_codes').select('*').eq('code', code).maybeSingle();
+    if (error || !d) return showToast('❌ کد نامعتبر');
+    const usedCount = (d.used_by || []).length;
+    if (d.max_uses > 0 && usedCount >= d.max_uses) return showToast('⛔ این کد تمام شده');
+    showToast(`✅ ${d.days} روز هدیه`);
 }
 
 async function _applyGiftCodeToUser(code, statusEl) {
-    if (!currentUser || isGuestMode) { if (statusEl) statusEl.textContent = '⚠️ ابتدا وارد حساب شوید'; return false; }
+    if (!currentUser) { if (statusEl) statusEl.textContent = '⚠️'; return false; }
+    if (isGuestMode) { if (statusEl) statusEl.textContent = '⚠️ مهمان'; return false; }
+    const { data: disc, error } = await sb.from('discount_codes').select('*').eq('code', code).maybeSingle();
+    if (error || !disc) { if (statusEl) statusEl.textContent = '❌'; return false; }
+    const usedCount = (disc.used_by || []).length;
+    if (disc.max_uses > 0 && usedCount >= disc.max_uses) { if (statusEl) statusEl.textContent = '⛔'; return false; }
+    if ((disc.used_by || []).includes(currentUser.id)) { if (statusEl) statusEl.textContent = '⚠️ قبلاً استفاده کردی'; return false; }
+    const days = Number(disc.days) || 0;
+    if (days < 1) { if (statusEl) statusEl.textContent = '❌'; return false; }
     if (statusEl) statusEl.textContent = '⏳...';
-    try {
-        const result = await redeemGiftCode(code);
-        currentUser.subscriptionEnd = result.subscription_end;
-        const daysLeft = calcDaysLeft(currentUser.subscriptionEnd);
-        const ud = document.getElementById('userBadgeDays');
-        if (ud) ud.textContent = `(${daysLeft} روز مانده)`;
-        if (statusEl) statusEl.textContent = `✅ ${result.days_added} روز اضافه شد`;
-        showToast(`🎁 ${result.days_added} روز اضافه شد`);
-        return Number(result.days_added) || false;
-    } catch (error) {
-        if (statusEl) statusEl.textContent = '❌ ' + error.message;
-        showToast('❌ ' + error.message);
-        return false;
-    }
+    const { data: prof } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
+    if (!prof) { if (statusEl) statusEl.textContent = '❌'; return false; }
+    const base = getRenewalBase(prof.subscription_end);
+    const newEnd = addDaysSafe(base, days);
+    await sb.from('profiles').update({ subscription_end: newEnd.toISOString() }).eq('id', currentUser.id);
+    await sb.from('discount_codes').update({
+        used_count: usedCount + 1,
+        used_by: [...(disc.used_by || []), currentUser.id]
+    }).eq('id', disc.id);
+    currentUser.subscriptionEnd = newEnd.toISOString();
+    const daysLeft = calcDaysLeft(currentUser.subscriptionEnd);
+    const ud = document.getElementById('userBadgeDays');
+    if (ud) ud.textContent = `(${daysLeft} روز مانده)`;
+    showToast(`🎁 ${days} روز اضافه شد`);
+    return days;
 }
 
 async function checkExpiredDiscount() {
@@ -1804,14 +2116,12 @@ function showSubscriptionInfo() {
 }
 
 async function logout() {
-    if (roomChannel) {
-        try { await leaveMeeting(true); } catch (error) { console.warn('[Lroom] Room cleanup during logout failed', error); }
-    }
     if (isGuestMode) {
-        lroomStorage.removeItem('lroom_guest_name');
+        localStorage.removeItem('lroom_guest_name');
         isGuestMode = false;
         guestName = '';
         currentUser = null;
+        if (livekitRoom) { try { livekitRoom.disconnect(); } catch(e) {} }
         if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
         const u = new URL(location.href);
         u.searchParams.delete('room');
@@ -1821,7 +2131,8 @@ async function logout() {
     }
     try { await sb.auth.signOut(); } catch (e) {}
     currentUser = null;
-    if (roomChannel) { try { await roomChannel.untrack(); await sb.removeChannel(roomChannel); } catch(e) {} roomChannel = null; }
+    if (realtimeChannel) { try { sb.removeChannel(realtimeChannel); } catch(e) {} }
+    if (livekitRoom) { try { livekitRoom.disconnect(); } catch(e) {} }
     if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
     location.reload();
 }
@@ -1832,49 +2143,19 @@ function copySessionCode() {
     navigator.clipboard.writeText(code).then(() => showToast('📋 کپی شد: ' + code)).catch(() => prompt('کد:', code));
 }
 
-function makeRoomCode(length = 10) {
-    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    const bytes = new Uint8Array(length);
-    crypto.getRandomValues(bytes);
-    return Array.from(bytes, value => alphabet[value % alphabet.length]).join('');
-}
-
-async function ensureRoomInvitationRecord(code) {
-    if (!currentUser || isGuestMode || !sb) throw new Error('فقط حساب مدرس می‌تواند لینک کلاس بسازد.');
-    const { error } = await sb.from('lroom_rooms').upsert({
-        room_code: code,
-        owner_id: currentUser.id,
-        is_active: true,
-        updated_at: new Date().toISOString()
-    }, { onConflict: 'room_code' });
-    if (error) throw new Error('فعال‌سازی لینک کلاس ناموفق بود: ' + error.message);
-}
-
 async function ensureSessionCode() {
     if (!currentUser || isGuestMode) return null;
-    const existing = String(currentUser.sessionCode || '').toUpperCase();
-    if (/^[A-Z0-9]{8,12}$/.test(existing)) {
-        await ensureRoomInvitationRecord(existing);
-        return existing;
+    if (currentUser.sessionCode) return currentUser.sessionCode;
+    let code;
+    for (let i = 0; i < 10; i++) {
+        code = String(1000 + Math.floor(Math.random() * 9000));
+        const { data } = await sb.from('profiles').select('id').eq('session_code', code).maybeSingle();
+        if (!data) break;
     }
-    for (let attempt = 0; attempt < 12; attempt++) {
-        const code = makeRoomCode(10);
-        const { data, error } = await sb.from('profiles')
-            .update({ session_code: code })
-            .eq('id', currentUser.id)
-            .select('session_code')
-            .single();
-        if (!error && data?.session_code) {
-            currentUser.sessionCode = data.session_code;
-            await ensureRoomInvitationRecord(data.session_code);
-            return data.session_code;
-        }
-        if (error?.code === '23505') continue;
-        throw new Error(error?.message || 'ساخت کد امن جلسه ناموفق بود.');
-    }
-    throw new Error('ساخت کد جلسهٔ یکتا ناموفق بود؛ دوباره تلاش کنید.');
+    await sb.from('profiles').update({ session_code: code }).eq('id', currentUser.id);
+    currentUser.sessionCode = code;
+    return code;
 }
-
 
 function setLobbyRole(role) {
     selectedLobbyRole = role;
@@ -1923,6 +2204,7 @@ function checkAndShow() {
         document.getElementById('userBadgeName').textContent = currentUser.name + ' (مهمان)';
         document.getElementById('userBadgeDays').textContent = '';
         document.getElementById('userBadgeCrown').style.display = 'none';
+        updateAdminButtons();
         setLobbyRole('student');
         return;
     }
@@ -1938,6 +2220,7 @@ function checkAndShow() {
         document.getElementById('userBadgeName').textContent = currentUser.name;
         document.getElementById('userBadgeDays').textContent = isAdmin ? '' : `(${daysLeft} روز مانده)`;
         document.getElementById('userBadgeCrown').style.display = isAdmin ? 'inline' : 'none';
+        updateAdminButtons();
         setLobbyRole('teacher');
     } else {
         const exp = document.getElementById('expiredScreen');
@@ -1967,6 +2250,53 @@ function togglePreviewCam() {
     b.textContent = tr.enabled ? '📹' : '📷';
 }
 
+function isAdminUser() { return currentUser && currentUser.role === 'admin' && !isGuestMode; }
+
+function updateAdminButtons() { /* Admin UI removed from this edition. */ }
+
+function showGlobalBanner(ann) {
+    if (!ann) return;
+    const b = document.getElementById('adminGlobalBanner');
+    const t = document.getElementById('adminGlobalBannerText');
+    const m = document.getElementById('adminGlobalBannerMeta');
+    if (!b) return;
+    t.textContent = '📢 ' + ann.text;
+    m.textContent = 'از مدیریت • ' + new Date(ann.created_at || ann.at).toLocaleString('fa-IR');
+    b.classList.add('show');
+}
+function hideGlobalBanner() {
+    const b = document.getElementById('adminGlobalBanner');
+    if (b) b.classList.remove('show');
+}
+function dismissGlobalBanner() {
+    if (adminActiveAnnouncement) sessionStorage.setItem('lroom_banner_dismissed', adminActiveAnnouncement.id);
+    hideGlobalBanner();
+}
+
+function initRealtime() {
+    if (realtimeChannel) { try { sb.removeChannel(realtimeChannel); } catch(e) {} }
+    realtimeChannel = sb.channel('lroom-realtime')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements' }, (payload) => {
+            if (payload.new && payload.new.is_active) {
+                adminActiveAnnouncement = payload.new;
+                if (sessionStorage.getItem('lroom_banner_dismissed') !== payload.new.id) {
+                    showGlobalBanner(payload.new);
+                }
+            } else if (payload.eventType === 'UPDATE' && payload.new && !payload.new.is_active) {
+                hideGlobalBanner();
+            }
+        })
+        .subscribe();
+}
+
+async function loadActiveAnnouncement() {
+    const { data } = await sb.from('announcements').select('*').eq('is_active', true).order('created_at', { ascending: false }).limit(1).maybeSingle();
+    if (data && sessionStorage.getItem('lroom_banner_dismissed') !== data.id) {
+        adminActiveAnnouncement = data;
+        setTimeout(() => showGlobalBanner(data), 1000);
+    }
+}
+
 function showGuestJoinScreen(roomCode) {
     ['authScreen', 'lobby', 'expiredScreen'].forEach(id => {
         const el = document.getElementById(id);
@@ -1974,257 +2304,61 @@ function showGuestJoinScreen(roomCode) {
     });
     const gs = document.getElementById('guestJoinScreen');
     if (gs) gs.style.display = 'flex';
-    const codeEl = document.getElementById('guestRoomCodeDisplay');
-    if (codeEl) codeEl.textContent = roomCode;
-    const savedName = lroomStorage.getItem('lroom_guest_name') || '';
-    const input = document.getElementById('guestNameInput');
-    if (input && !input.value) input.value = savedName;
-    const error = document.getElementById('guestJoinError');
-    if (error) { error.textContent = ''; error.style.display = 'none'; }
-    setTimeout(() => input?.focus(), 200);
-    if (input) input.onkeydown = event => { if (event.key === 'Enter') submitGuestJoin(); };
+    document.getElementById('guestRoomCodeDisplay').textContent = roomCode;
+    const savedName = localStorage.getItem('lroom_guest_name') || '';
+    if (savedName) document.getElementById('guestNameInput').value = savedName;
+    setTimeout(() => document.getElementById('guestNameInput').focus(), 200);
+    const inp = document.getElementById('guestNameInput');
+    inp.onkeypress = (e) => { if (e.key === 'Enter') submitGuestJoin(); };
 }
 function cancelGuestJoin() {
     const u = new URL(location.href);
     u.searchParams.delete('room');
     u.searchParams.delete('join');
-    if (isGuestMode && sb) {
-        sb.auth.signOut().finally(() => { location.href = u.toString(); });
-    } else {
-        location.href = u.toString();
-    }
+    location.href = u.toString();
 }
 async function submitGuestJoin() {
-    const params = new URLSearchParams(location.search);
-    const roomCode = String(params.get('room') || lroomStorage.getItem('lroom_pending_room') || '').trim().toUpperCase();
-    const input = document.getElementById('guestNameInput');
-    const button = document.getElementById('guestJoinBtn');
-    const errorEl = document.getElementById('guestJoinError');
-    const name = sanitizeName(input?.value || '');
-    const showError = message => {
-        if (errorEl) { errorEl.textContent = message; errorEl.style.display = 'block'; }
-        else showToast(message);
-    };
-    if (!/^[A-Z0-9]{8,12}$/.test(roomCode)) return showError('لینک یا کد کلاس معتبر نیست.');
-    if (name.length < 2) { showError('لطفاً نام خود را وارد کنید.'); input?.focus(); return; }
-
-    if (button) { button.disabled = true; button.textContent = '⏳ در حال اتصال...'; }
-    if (errorEl) { errorEl.textContent = ''; errorEl.style.display = 'none'; }
+    const name = document.getElementById('guestNameInput').value.trim();
+    if (!name || name.length < 2) return showToast('⚠️ نام را وارد کنید');
+    const roomCode = new URLSearchParams(location.search).get('room');
+    if (!roomCode) return showToast('❌ کد پیدا نشد');
+    const btn = document.getElementById('guestJoinBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳...';
+    localStorage.setItem('lroom_guest_name', name);
+    isGuestMode = true;
+    guestName = name;
     try {
-        await ensureSupabaseClient();
-        const { data: sessionData, error: sessionError } = await sb.auth.getSession();
-        if (sessionError) throw sessionError;
-        let authUser = sessionData?.session?.user || null;
-
-        // Invite links use Supabase anonymous auth: no email, password or registration screen.
-        if (!authUser) {
-            const { data, error } = await sb.auth.signInAnonymously({ options: { data: { name } } });
-            if (error) {
-                if (/anonymous|disabled|not enabled/i.test(error.message || '')) {
-                    throw new Error('ورود مهمان هنوز در Supabase فعال نشده است. در Authentication → Sign In / Providers، گزینهٔ Anonymous Sign-Ins را فعال کنید.');
-                }
-                throw error;
-            }
-            authUser = data?.user;
-        } else if (authUser.is_anonymous) {
-            const { data, error } = await sb.auth.updateUser({ data: { name } });
-            if (!error && data?.user) authUser = data.user;
-        }
-        if (!authUser?.id) throw new Error('ساخت نشست مهمان ناموفق بود. دوباره تلاش کنید.');
-
-        guestName = name;
-        lroomStorage.setItem('lroom_guest_name', name);
-        lroomStorage.setItem('lroom_pending_room', roomCode);
-        if (authUser.is_anonymous) {
-            currentUser = {
-                id: authUser.id,
-                email: '',
-                name,
-                role: 'guest',
-                sessionCode: null,
-                subscriptionEnd: null
-            };
-            isGuestMode = true;
-        } else {
-            const profile = await ensureLroomProfile(authUser);
-            currentUser = {
-                id: profile.id,
-                email: profile.email || authUser.email || '',
-                name,
-                role: profile.role || 'user',
-                sessionCode: profile.session_code || null,
-                subscriptionEnd: profile.subscription_end
-            };
-            isGuestMode = false;
-        }
-
-        selectedLobbyRole = 'student';
-        const joinInput = document.getElementById('joinRoomCode');
-        if (joinInput) joinInput.value = roomCode;
-        await loadLroomClassFeatures();
-        const guestScreen = document.getElementById('guestJoinScreen');
-        if (guestScreen) guestScreen.style.display = 'none';
-        selectedLobbyRole = 'student';
-        setLobbyRole('student');
-        await joinMeeting();
-    } catch (error) {
-        console.error('[Lroom guest invite]', error);
-        showError('❌ ' + (error?.message || 'ورود به کلاس ناموفق بود.'));
-    } finally {
-        if (button) { button.disabled = false; button.textContent = '🚀 ورود به اتاق انتظار'; }
-    }
-}
-
-// ── Lazy classroom module: loaded only after a valid Supabase session exists. ──
-let __lroomClassPromise = null;
-let __lroomClassUIReady = false;
-function loadLroomClassFeatures() {
-    if (__lroomClassUIReady) return Promise.resolve(true);
-    if (!__lroomClassPromise) {
-        __lroomClassPromise = new Promise((resolve, reject) => {
-            try {
-                const source = document.getElementById('lroom-class-source');
-                if (!source) throw new Error('کد بخش کلاس در فایل اصلی پیدا نشد.');
-                const script = document.createElement('script');
-                script.dataset.lroomClass = '1';
-                script.textContent = source.textContent;
-                document.body.appendChild(script);
-                if (typeof window.initLroomClassUI === 'function') window.initLroomClassUI();
-                else throw new Error('راه‌اندازی بخش کلاس کامل نشد.');
-                __lroomClassUIReady = true;
-                resolve(true);
-            } catch (error) { reject(error); }
-        }).catch(error => { __lroomClassPromise = null; throw error; });
-    }
-    return __lroomClassPromise;
-}
-
-// Explicitly expose auth handlers for form listeners and older inline controls.
-window.handleLogin = handleLogin;
-window.handleRegister = handleRegister;
-window.switchAuthTab = switchAuthTab;
-
-(function bindLroomAuthControls() {
-    function bind() {
-        const loginTab = document.getElementById('tabLogin');
-        const registerTab = document.getElementById('tabRegister');
-        const loginForm = document.getElementById('loginForm');
-        const registerForm = document.getElementById('registerForm');
-        if (loginTab && !loginTab.dataset.lroomBound) {
-            loginTab.dataset.lroomBound = '1';
-            loginTab.addEventListener('click', event => { event.preventDefault(); switchAuthTab('login'); });
-        }
-        if (registerTab && !registerTab.dataset.lroomBound) {
-            registerTab.dataset.lroomBound = '1';
-            registerTab.addEventListener('click', event => { event.preventDefault(); switchAuthTab('register'); });
-        }
-        if (loginForm && !loginForm.dataset.lroomBound) {
-            loginForm.dataset.lroomBound = '1';
-            loginForm.addEventListener('submit', event => { event.preventDefault(); handleLogin(event); });
-        }
-        if (registerForm && !registerForm.dataset.lroomBound) {
-            registerForm.dataset.lroomBound = '1';
-            registerForm.addEventListener('submit', event => { event.preventDefault(); handleRegister(event); });
-        }
-        switchAuthTab('login');
-    }
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind, { once: true });
-    else bind();
-})();
-
-async function bootLroomAuthOnly() {
-    if (!navigator.onLine) {
-        showToast('📡 اینترنت قطع است. اتصال را بررسی کنید.');
-        return;
-    }
-    document.body.classList.toggle('light-theme', currentTheme === 'light');
-    const savedLang = lroomStorage.getItem('lroom_lang') || detectedLocale;
-    const langSelect = document.getElementById('langSelect');
-    if (langSelect) langSelect.value = savedLang;
-    try { applyLanguage(savedLang); } catch (error) { console.warn('[Lroom language]', error); }
-
-    const themeIcon = currentTheme === 'light' ? '☀️' : '🌙';
-    const themeButton = document.getElementById('themeToggle');
-    if (themeButton) themeButton.textContent = themeIcon;
-    const meetingThemeButton = document.getElementById('themeToggleMeeting');
-    if (meetingThemeButton) meetingThemeButton.textContent = themeIcon;
-
-    const params = new URLSearchParams(location.search);
-    const inviteRoom = String(params.get('room') || '').trim().toUpperCase();
-    const isInviteLink = params.get('join') === '1' && /^[A-Z0-9]{8,12}$/.test(inviteRoom);
-    try {
-        await ensureSupabaseClient();
-        const sessionResult = await Promise.race([
-            sb.auth.getSession(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('اتصال به Supabase بیش از حد طول کشید.')), 10000))
-        ]);
-        const session = sessionResult?.data?.session;
-        if (!session?.user) {
-            if (isInviteLink) { showGuestJoinScreen(inviteRoom); return; }
-            const auth = document.getElementById('authScreen');
-            if (auth) auth.style.display = 'flex';
-            return;
-        }
-
-        if (session.user.is_anonymous) {
-            if (isInviteLink) {
-                currentUser = {
-                    id: session.user.id,
-                    email: '',
-                    name: session.user.user_metadata?.name || lroomStorage.getItem('lroom_guest_name') || 'مهمان',
-                    role: 'guest',
-                    sessionCode: null,
-                    subscriptionEnd: null
-                };
-                isGuestMode = true;
-                showGuestJoinScreen(inviteRoom);
-                return;
-            }
-            try { await sb.auth.signOut(); } catch (e) {}
-            const auth = document.getElementById('authScreen');
-            if (auth) auth.style.display = 'flex';
-            return;
-        }
-
-        const profile = await ensureLroomProfile(session.user);
+        const { data: anonData, error: anonError } = await sb.auth.signInAnonymously();
+        if (anonError || !anonData?.user) throw new Error(anonError?.message || 'ساخت نشست مهمان ناموفق بود');
         currentUser = {
-            id: profile.id,
-            email: profile.email || session.user.email || '',
-            name: profile.name || session.user.user_metadata?.name || 'User',
-            role: profile.role || 'user',
-            sessionCode: profile.session_code || null,
-            subscriptionEnd: profile.subscription_end
+            id: anonData.user.id, email: '', name: name, role: 'student',
+            sessionCode: null, subscriptionEnd: null, isGuest: true
         };
+    } catch (guestAuthError) {
         isGuestMode = false;
-        if (isInviteLink) {
-            showGuestJoinScreen(inviteRoom);
-            return;
-        }
-        try { await redeemPendingGiftCode(); } catch (error) { console.warn('[Lroom pending gift]', error); }
-        checkAndShow();
-        try { await loadLroomClassFeatures(); }
-        catch (classError) { console.error('[Lroom class module]', classError); showToast('حساب شما وارد شد، اما بخش کلاس آماده نشد. صفحه را تازه‌سازی کنید.'); }
-    } catch (error) {
-        console.error('[Lroom auth bootstrap]', error);
-        const auth = document.getElementById('authScreen');
-        if (auth) auth.style.display = 'flex';
-        showToast('⚠️ ' + (error?.message || 'اتصال اولیه ناموفق بود.'));
+        btn.disabled = false;
+        btn.textContent = '🚀 ورود به اتاق انتظار';
+        return showToast('❌ ورود مهمان ناموفق بود: ' + (guestAuthError.message || 'خطا'));
+    }
+    document.getElementById('guestJoinScreen').style.display = 'none';
+    selectedLobbyRole = 'student';
+    document.getElementById('joinRoomCode').value = roomCode;
+    try {
+        await joinMeeting();
+    } catch (e) {
+        showToast('❌ ' + (e.message || 'خطا'));
+        document.getElementById('guestJoinScreen').style.display = 'flex';
+        btn.disabled = false;
+        btn.textContent = '🚀 ورود به اتاق انتظار';
     }
 }
 
-document.addEventListener('DOMContentLoaded', bootLroomAuthOnly, { once: true });
-
-
-
-</script>
-<script type="text/plain" id="lroom-class-source">
-
+// Admin panel code removed from this edition.
 
 // JOIN
 async function joinMeeting() {
-    if (!currentUser) return showToast('ابتدا وارد Lroom شوید یا از لینک دعوت نام خود را وارد کنید.');
-    if (isGuestMode && selectedLobbyRole !== 'student') return showToast('حساب مهمان فقط می‌تواند به‌عنوان دانشجو وارد شود.');
-    if (roomChannel || isWaitingForApproval) return showToast('درخواست ورود شما در حال انجام است.');
+    if (!currentUser) return showToast('⚠️ لطفاً وارد شوید');
     if (!isGuestMode && currentUser.role !== 'admin') {
         const end = parseDateSafe(currentUser.subscriptionEnd);
         if (end && end.getTime() < Date.now()) {
@@ -2234,260 +2368,194 @@ async function joinMeeting() {
         }
     }
 
-    myName = sanitizeName(guestName || currentUser.name) || 'کاربر';
+    myName = sanitizeName(currentUser.name);
+    if (!myName) myName = 'کاربر';
     myRole = selectedLobbyRole;
-    if (!['teacher', 'student'].includes(myRole)) return showToast('نقش ورود معتبر نیست.');
+    if (isGuestMode) myRole = 'student';
+
+    try {
+        if (myRole === 'teacher' && !isGuestMode) {
+            const code = await ensureSessionCode();
+            roomId = sanitize(code);
+        } else {
+            const studentCode = document.getElementById('joinRoomCode')?.value.trim() || '';
+            roomId = sanitize(studentCode);
+        }
+        if (!roomId) return showToast('⚠️ کد جلسه معتبر نیست');
+    } catch (roomError) {
+        showToast('❌ دریافت کد جلسه ناموفق بود: ' + (roomError.message || 'خطا'));
+        return;
+    }
 
     const btn = document.getElementById('joinBtn');
     if (btn) { btn.disabled = true; btn.textContent = '⏳...'; }
+
     showConnectCountdown();
+    let permOk = false;
+    try {
+        permOk = await requestMediaPermission();
+    } catch (permissionError) {
+        showToast('❌ دریافت دسترسی دوربین/میکروفون ناموفق بود: ' + (permissionError.message || 'خطا'));
+    }
+    if (!permOk) {
+        hideConnectCountdown();
+        if (btn) { btn.disabled = false; btn.textContent = I18N[currentLang].joinMeeting; }
+        return;
+    }
+
+    showToast('⏳ در حال اتصال...');
 
     try {
-        if (myRole === 'teacher') {
-            if (isGuestMode) throw new Error('مهمان اجازهٔ ساخت کلاس ندارد.');
-            roomId = String(await ensureSessionCode() || '').toUpperCase();
-        } else {
-            const urlRoom = new URLSearchParams(location.search).get('room');
-            roomId = sanitize(urlRoom || document.getElementById('joinRoomCode')?.value || '').toUpperCase();
+        myId = myRole === 'teacher' ? `teacher-${roomId}` : `student-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+        teacherId = `teacher-${roomId}`;
+
+        await ensureLiveKitClient();
+        const tokenPromise = requestLiveKitToken(roomId, myId, myName, myRole);
+
+        livekitRoom = new LivekitClient.Room({
+            adaptiveStream: true,
+            dynacast: true,
+            disconnectOnPageLeave: false,
+            videoCaptureDefaults: { resolution: { width: 480, height: 270, frameRate: 15 }, facingMode: 'user' },
+            audioCaptureDefaults: { echoCancellation: true },
+            publishDefaults: {
+                simulcast: true,
+                videoSimulcastLayers: [
+                    { width: 160, height: 90, encoding: { maxBitrate: 60000, maxFramerate: 8 } },
+                    { width: 320, height: 180, encoding: { maxBitrate: 150000, maxFramerate: 12 } }
+                ],
+                videoCodec: 'vp8', dtx: true,
+                degradationPreference: 'maintain-framerate',
+                screenShareEncoding: { maxBitrate: 1200000, maxFramerate: 10 },
+            },
+            connectOptions: {
+                autoSubscribe: true, maxRetries: 8,
+                peerConnectionTimeout: 30000, websocketTimeout: 30000,
+                rtcConfig: {
+                    iceTransportPolicy: 'all', bundlePolicy: 'max-bundle', rtcpMuxPolicy: 'require',
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' },
+                        { urls: 'stun:stun.cloudflare.com:3478' }
+                    ]
+                }
+            },
+            reconnectPolicy: {
+                nextRetryDelayInMs: (ctx) => ctx.retryCount < 3 ? 500 : (ctx.retryCount < 10 ? 1500 : 3000),
+                maxRetryDelayMs: 5000
+            },
+        });
+
+        setupLiveKitEvents();
+
+        const token = await tokenPromise;
+        if (!localStream) {
+            hideConnectCountdown();
+            if (btn) { btn.disabled = false; btn.textContent = I18N[currentLang].joinMeeting; }
+            showPermissionModal('NotFoundError');
+            return;
         }
-        if (!/^[A-Z0-9]{8,12}$/.test(roomId)) throw new Error('کد کلاس معتبر نیست. کد باید ۸ تا ۱۲ حرف یا عدد داشته باشد.');
 
-        const clientToken = (crypto.randomUUID ? crypto.randomUUID() : makeRoomCode(24)).replace(/[^a-zA-Z0-9-]/g, '');
-        myId = `${myRole}-${clientToken}`;
-        teacherId = '';
-        mediaTransportMode = 'p2p';
-        p2pFallbackReason = '';
-        p2pRoomRoster.clear();
-        remoteParticipants.clear();
+        const hasVideo = localStream.getVideoTracks().length > 0;
+        const hasAudio = localStream.getAudioTracks().length > 0;
+        if (!hasVideo && !hasAudio) {
+            hideConnectCountdown();
+            if (btn) { btn.disabled = false; btn.textContent = I18N[currentLang].joinMeeting; }
+            showPermissionModal('NotFoundError');
+            return;
+        }
+        if (!hasAudio) showToast('⚠️ بدون میکروفون وارد می‌شوید');
+        if (!hasVideo) showToast('⚠️ بدون دوربین وارد می‌شوید');
 
-        if (myRole === 'student') {
-            // A student is recorded as PENDING only. They are not put in the participant roster
-            // and do not join Realtime/P2P until the teacher explicitly admits them.
-            const { error: cleanupError } = await sb.from('lroom_room_members').delete()
-                .eq('room_code', roomId).eq('user_id', currentUser.id);
-            if (cleanupError) throw new Error('پاک‌سازی درخواست قبلی ناموفق بود: ' + cleanupError.message);
-            const { error: requestError } = await sb.from('lroom_room_members').insert({
-                room_code: roomId,
-                client_id: myId,
-                user_id: currentUser.id,
-                display_name: myName,
-                role: 'student',
-                status: 'pending'
-            });
-            if (requestError) throw new Error('ثبت درخواست ورود ناموفق بود: ' + requestError.message);
+        showToast('🌐 در حال اتصال به سرور...');
+        let elapsed = 0;
+        const progressInterval = setInterval(() => {
+            elapsed += 3;
+            if (elapsed === 9) showConnBanner(t('connWait'));
+            if (elapsed === 30) showConnBanner(t('connPatience'));
+        }, 3000);
 
+        try {
+            await Promise.race([
+                livekitRoom.connect(LIVEKIT_URL, token),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 45000))
+            ]);
+        } catch (connectErr) {
+            if (connectErr.message && connectErr.message.includes('timeout')) {
+                throw new Error('⏱️ اتصال طول کشید. اینترنت را چک کنید.');
+            }
+            throw connectErr;
+        } finally {
+            clearInterval(progressInterval);
+            hideConnBanner();
+        }
+
+        showMeetingUI();
+        showToast('✅ متصل شدید');
+        hideConnectCountdown();
+        setTimeout(checkRealConnectionQuality, 5000);
+
+        const lp = livekitRoom.localParticipant;
+
+        if (myRole === 'teacher') {
+            (async () => {
+                if (localStream.getAudioTracks()[0]) {
+                    try {
+                        await lp.publishTrack(localStream.getAudioTracks()[0], { name: 'microphone', source: LivekitClient.Track.Source.Microphone });
+                        isMicOn = true;
+                        localStream.getAudioTracks().forEach(t => t.enabled = true);
+                        updateMicUI();
+                        broadcast({ type: 'mic', on: true });
+                    } catch (e) {}
+                }
+                if (localStream.getVideoTracks()[0]) {
+                    try {
+                        await lp.publishTrack(localStream.getVideoTracks()[0], { name: 'camera', source: LivekitClient.Track.Source.Camera });
+                        isCamOn = true;
+                        localStream.getVideoTracks().forEach(t => t.enabled = true);
+                        updateCamUI();
+                        broadcast({ type: 'cam', on: true });
+                    } catch (e) {}
+                }
+                sendData({ type: 'hello', name: myName, role: myRole, micOn: isMicOn, camOn: isCamOn, isWaiting: false });
+            })();
+        } else {
             isMicOn = false;
             isCamOn = false;
-            isWaitingForApproval = true;
             myPermissions.mic = false;
             myPermissions.cam = false;
             myPermissions.whiteboard = false;
             myPermissions.projector = false;
-            hideConnectCountdown();
-            if (btn) { btn.disabled = false; btn.textContent = I18N[currentLang].joinMeeting; }
-            const waiting = document.getElementById('waitingRoomOverlay');
-            const teacherName = document.getElementById('waitingTeacherName');
-            if (teacherName) teacherName.textContent = 'درخواست شما برای مدرس ارسال شد';
-            if (waiting) waiting.style.display = 'flex';
-            startStudentApprovalPolling();
-            showToast('درخواست ورود ارسال شد؛ تا تأیید مدرس منتظر بمانید.');
-            return;
-        }
+            isWaitingForApproval = true;
+            startWaitingAudioBlocker();
+            document.getElementById('waitingRoomOverlay').style.display = 'flex';
 
-        const permOk = await requestMediaPermission();
-        if (!permOk || !localStream || !localStream.getTracks().length) throw new Error('دسترسی میکروفون یا دوربین فراهم نشد.');
-        if (typeof RTCPeerConnection !== 'function') throw new Error('این مرورگر از WebRTC پشتیبانی نمی‌کند.');
-
-        const { error: roomError } = await sb.from('lroom_rooms').upsert({
-            room_code: roomId,
-            owner_id: currentUser.id,
-            is_active: true,
-            updated_at: new Date().toISOString()
-        }, { onConflict: 'room_code' });
-        if (roomError) throw new Error('ساخت اتاق ناموفق بود: ' + roomError.message);
-
-        // Preserve pending students who arrived through an invitation before the teacher entered.
-        const { error: staleMembersError } = await sb.from('lroom_room_members').delete()
-            .eq('room_code', roomId).neq('status', 'pending');
-        if (staleMembersError) throw new Error('پاک‌سازی نشست قبلی ناموفق بود: ' + staleMembersError.message);
-
-        const { error: memberError } = await sb.from('lroom_room_members').insert({
-            room_code: roomId,
-            client_id: myId,
-            user_id: currentUser.id,
-            display_name: myName,
-            role: 'teacher',
-            status: 'admitted'
-        });
-        if (memberError) throw new Error('ثبت حضور مدرس ناموفق بود: ' + memberError.message);
-
-        isWaitingForApproval = false;
-        isMicOn = !!localStream.getAudioTracks()[0];
-        isCamOn = !!localStream.getVideoTracks()[0];
-        localStream.getAudioTracks().forEach(track => track.enabled = isMicOn);
-        localStream.getVideoTracks().forEach(track => track.enabled = isCamOn);
-        await loadP2PRoomRoster();
-        await loadP2PTurnConfig();
-        await setupP2PRealtime();
-
-        showMeetingUI();
-        syncP2PPeerTracks();
-        updateMicUI();
-        updateCamUI();
-        updateMediaTransportBadge();
-        hideConnectCountdown();
-        startTeacherWaitingRequests();
-        broadcast({ type: 'hello', name: myName, role: 'teacher', micOn: isMicOn, camOn: isCamOn, isWaiting: false });
-        broadcast({ type: 'mic', on: isMicOn });
-        broadcast({ type: 'cam', on: isCamOn });
-        setTimeout(checkRealConnectionQuality, 5000);
-    } catch (err) {
-        console.error('[Lroom P2P join]', err);
-        hideConnectCountdown();
-        showToast('❌ ' + (err.message || 'اتصال P2P ناموفق بود.'));
-        if (myRole === 'teacher') {
-            try {
-                if (roomChannel) { await roomChannel.untrack(); await sb.removeChannel(roomChannel); }
-                if (roomId && currentUser) {
-                    await sb.from('lroom_room_members').delete().eq('room_code', roomId).eq('client_id', myId).eq('user_id', currentUser.id);
-                    await sb.from('lroom_rooms').update({ is_active: false, updated_at: new Date().toISOString() }).eq('room_code', roomId).eq('owner_id', currentUser.id);
+            livekitRoom.remoteParticipants.forEach(p => {
+                if (p.identity && p.identity.startsWith('teacher-')) {
+                    const el = document.getElementById('waitingTeacherName');
+                    if (el) el.textContent = '👨‍🏫 ' + (p.name || p.identity);
                 }
-            } catch (cleanupError) { console.warn('[Lroom P2P cleanup]', cleanupError); }
-        } else if (myRole === 'student') {
-            try { if (roomId && myId && currentUser) await sb.from('lroom_room_members').delete().eq('room_code', roomId).eq('client_id', myId).eq('user_id', currentUser.id); } catch (e) {}
+            });
+
+            const sendWaitingHello = () => {
+                if (!isWaitingForApproval || !livekitRoom) return;
+                sendData({ type: 'hello', name: myName, role: myRole, micOn: false, camOn: false, isWaiting: true });
+            };
+            [300, 1000, 2500, 5000, 10000, 15000, 30000].forEach(ms => setTimeout(sendWaitingHello, ms));
         }
-        roomChannel = null;
-        isWaitingForApproval = false;
-        if (studentApprovalTimer) { clearInterval(studentApprovalTimer); studentApprovalTimer = null; }
-        stopWaitingAudioBlocker();
-        const waitingOverlay = document.getElementById('waitingRoomOverlay');
-        if (waitingOverlay) waitingOverlay.style.display = 'none';
+
+    } catch (err) {
+        hideConnectCountdown();
+        showToast('❌ ' + (err.message || 'خطای اتصال'));
         if (btn) { btn.disabled = false; btn.textContent = I18N[currentLang].joinMeeting; }
-        p2pRoomRoster.clear();
-        teacherId = '';
-        if (myRole === 'student' && isGuestMode) {
-            showGuestJoinScreen(roomId);
-            const guestError = document.getElementById('guestJoinError');
-            if (guestError) { guestError.textContent = '❌ ' + (err.message || 'درخواست ورود ناموفق بود.'); guestError.style.display = 'block'; }
-        }
-    }
-}
-
-function startTeacherWaitingRequests() {
-    if (teacherWaitingTimer) clearInterval(teacherWaitingTimer);
-    if (myRole !== 'teacher') return;
-    void refreshTeacherWaitingRequests();
-    teacherWaitingTimer = setInterval(() => { void refreshTeacherWaitingRequests(); }, 1800);
-}
-
-async function refreshTeacherWaitingRequests() {
-    if (myRole !== 'teacher' || !roomId || !currentUser || !sb) return;
-    try {
-        const { data, error } = await sb.from('lroom_room_members')
-            .select('client_id,user_id,display_name,joined_at')
-            .eq('room_code', roomId).eq('role', 'student').eq('status', 'pending')
-            .order('joined_at', { ascending: true });
-        if (error) throw error;
-        waitingList.clear();
-        (data || []).forEach(row => waitingList.set(row.client_id, {
-            name: sanitizeName(row.display_name) || 'دانشجو',
-            userId: row.user_id,
-            joinedAt: row.joined_at
-        }));
-        updateWaitingPanel();
-    } catch (error) {
-        console.warn('[Lroom] Waiting requests refresh failed:', error.message || error);
-    }
-}
-
-function startStudentApprovalPolling() {
-    if (studentApprovalTimer) clearInterval(studentApprovalTimer);
-    studentApprovalPollBusy = false;
-    const poll = () => { void pollStudentApproval(); };
-    poll();
-    studentApprovalTimer = setInterval(poll, 1800);
-}
-
-async function pollStudentApproval() {
-    if (studentApprovalPollBusy || !isWaitingForApproval || !roomId || !myId || !currentUser || !sb) return;
-    studentApprovalPollBusy = true;
-    try {
-        const { data, error } = await sb.from('lroom_room_members')
-            .select('status,display_name')
-            .eq('room_code', roomId).eq('client_id', myId).eq('user_id', currentUser.id)
-            .maybeSingle();
-        if (error) throw error;
-        if (!data) {
-            stopStudentApprovalPolling();
-            isWaitingForApproval = false;
-            document.getElementById('waitingRoomOverlay').style.display = 'none';
-            showToast('درخواست ورود دیگر در صف نیست. دوباره لینک یا کد کلاس را باز کنید.');
-            if (isGuestMode) showGuestJoinScreen(roomId);
-            return;
-        }
-        if (data.status === 'denied') {
-            stopStudentApprovalPolling();
-            isWaitingForApproval = false;
-            await sb.from('lroom_room_members').delete().eq('room_code', roomId).eq('client_id', myId).eq('user_id', currentUser.id);
-            document.getElementById('waitingRoomOverlay').style.display = 'none';
-            showToast('مدرس درخواست ورود شما را رد کرد.');
-            if (isGuestMode) showGuestJoinScreen(roomId);
-            return;
-        }
-        if (data.status === 'admitted') {
-            stopStudentApprovalPolling();
-            await completeApprovedStudentJoin();
-        }
-    } catch (error) {
-        console.warn('[Lroom] Approval polling failed:', error.message || error);
-    } finally {
-        studentApprovalPollBusy = false;
-    }
-}
-
-function stopStudentApprovalPolling() {
-    if (studentApprovalTimer) { clearInterval(studentApprovalTimer); studentApprovalTimer = null; }
-    studentApprovalPollBusy = false;
-}
-
-async function completeApprovedStudentJoin() {
-    try {
-        if (!localStream) {
-            const permOk = await requestMediaPermission();
-            if (!permOk || !localStream || !localStream.getTracks().length) throw new Error('برای ورود به کلاس، دسترسی میکروفون یا دوربین را مجاز کنید.');
-        }
-        if (typeof RTCPeerConnection !== 'function') throw new Error('این مرورگر از WebRTC پشتیبانی نمی‌کند.');
+        const wro = document.getElementById('waitingRoomOverlay');
+        if (wro) wro.style.display = 'none';
         isWaitingForApproval = false;
-        isMicOn = false;
-        isCamOn = false;
-        localStream.getAudioTracks().forEach(track => track.enabled = false);
-        localStream.getVideoTracks().forEach(track => track.enabled = false);
-        await loadP2PRoomRoster();
-        if (!teacherId) throw new Error('مدرس هنوز آنلاین نیست؛ درخواست شما تأیید شده است، اما اتصال کلاس آماده نیست. چند لحظه بعد دوباره تلاش کنید.');
-        await loadP2PTurnConfig();
-        await setupP2PRealtime();
-        document.getElementById('waitingRoomOverlay').style.display = 'none';
         stopWaitingAudioBlocker();
-        showMeetingUI();
-        syncP2PPeerTracks();
-        updateMicUI();
-        updateCamUI();
-        updateMediaTransportBadge();
-        showToast('✅ درخواست شما تأیید شد؛ در حال اتصال مستقیم به کلاس...');
-        setTimeout(checkRealConnectionQuality, 5000);
-    } catch (error) {
-        console.error('[Lroom approved student join]', error);
-        isWaitingForApproval = false;
-        document.getElementById('waitingRoomOverlay').style.display = 'none';
-        showToast('❌ ' + (error?.message || 'اتصال پس از تأیید ناموفق بود.'));
-        try { if (roomChannel) { await roomChannel.untrack(); await sb.removeChannel(roomChannel); } } catch (e) {}
-        roomChannel = null;
-        try { if (roomId && myId && currentUser) await sb.from('lroom_room_members').delete().eq('room_code', roomId).eq('client_id', myId).eq('user_id', currentUser.id); } catch (e) {}
-        if (localStream) { localStream.getTracks().forEach(track => track.stop()); localStream = null; }
-        if (isGuestMode) showGuestJoinScreen(roomId);
+        try { if (livekitRoom) await livekitRoom.disconnect(); } catch (e) {}
+        livekitRoom = null;
     }
 }
-
 
 function showMeetingUI() {
     document.getElementById('lobby').style.display = 'none';
@@ -2515,6 +2583,7 @@ function showMeetingUI() {
     }
     document.getElementById('btnSpotlightToggle').style.display = 'inline-block';
 
+    updateAdminButtons();
     addMyVideo();
     updateMicUI();
     updateCamUI();
@@ -2532,436 +2601,135 @@ function showMeetingUI() {
     if (myRole === 'teacher') setTimeout(() => autoAdjustQuality(true), 3000);
 }
 
-async function loadP2PRoomRoster() {
-    const { data, error } = await sb.from('lroom_room_members')
-        .select('client_id,user_id,display_name,role,status')
-        .eq('room_code', roomId).eq('status', 'admitted');
-    if (error) throw new Error('خواندن فهرست کلاس ناموفق بود: ' + error.message);
-    p2pRoomRoster = new Map((data || []).map(row => [row.client_id, row]));
-    const teacher = (data || []).find(row => row.role === 'teacher');
-    teacherId = teacher?.client_id || (myRole === 'teacher' ? myId : '');
-    return data || [];
-}
+function setupLiveKitEvents() {
+    const R = LivekitClient.RoomEvent;
 
-async function syncP2PRoomPresence() {
-    if (!roomChannel || roomPresenceSyncInFlight) return;
-    roomPresenceSyncInFlight = true;
-    try {
-        await loadP2PRoomRoster();
-        const presence = roomChannel.presenceState();
-        const onlineIds = new Set();
-        for (const [presenceKey, entries] of Object.entries(presence || {})) {
-            const peerId = String(presenceKey);
-            if (!peerId || peerId === myId) continue;
-            const member = p2pRoomRoster.get(peerId);
-            if (!member) continue; // never trust unverified presence metadata
-            onlineIds.add(peerId);
-            remoteParticipants.set(peerId, {
-                name: sanitizeName(member.display_name) || 'کاربر',
-                role: member.role,
-                userId: member.user_id,
-                micOn: false,
-                camOn: false,
-                handRaised: false
-            });
-            ensureP2PPeer(peerId);
-        }
-        if (onlineIds.size + 1 > P2P_MAX_PARTICIPANTS) {
-            showToast(`ظرفیت کلاس P2P حداکثر ${P2P_MAX_PARTICIPANTS} نفر است.`);
-            if (!window.__lroomP2PCapacityExit) {
-                window.__lroomP2PCapacityExit = true;
-                setTimeout(() => { window.__lroomP2PCapacityExit = false; if (roomChannel) void leaveMeeting(true); }, 350);
-            }
-            return;
-        }
-
-        for (const peerId of Array.from(remoteParticipants.keys())) {
-            if (!onlineIds.has(peerId)) {
-                closeP2PPeer(peerId);
-                removeVideo(peerId);
-                remoteParticipants.delete(peerId);
-                waitingList.delete(peerId);
-                studentPermissions.delete(peerId);
-                qualityCache.delete(peerId);
-                const statsEntry = stats.userStats.get(peerId);
-                if (statsEntry) statsEntry.isOnline = false;
-                if (attendanceLog.has(peerId)) attendanceLog.get(peerId).leftAt = new Date();
-            }
-        }
+    livekitRoom.on(R.ParticipantConnected, (p) => {
         updateParticipantCount();
-        updateTeacherPanel();
+        if (!p.identity || p.identity === myId) return;
+
+        if (myRole === 'teacher' || isCoTeacher) {
+            setTimeout(() => {
+                if (remoteParticipants.has(p.identity) || waitingList.has(p.identity)) return;
+                sendTo(p.identity, { type: 'request-hello' });
+            }, 2000);
+            setTimeout(() => {
+                if (remoteParticipants.has(p.identity) || waitingList.has(p.identity)) return;
+                sendTo(p.identity, { type: 'request-hello' });
+            }, 6000);
+        }
+        if (isWaitingForApproval) {
+            setTimeout(() => {
+                if (!isWaitingForApproval) return;
+                sendData({ type: 'hello', name: myName, role: myRole, micOn: false, camOn: false, isWaiting: true });
+            }, 500);
+        }
+        if (isWaitingForApproval && p.identity.startsWith('teacher-')) {
+            const el = document.getElementById('waitingTeacherName');
+            if (el) el.textContent = '👨‍🏫 ' + (p.name || p.identity);
+        }
+    });
+
+    livekitRoom.on(R.ParticipantDisconnected, (p) => {
+        removeVideo(p.identity);
+        remoteParticipants.delete(p.identity);
+        qualityCache.delete(p.identity);
+        waitingList.delete(p.identity);
+        pendingAdmits.delete(p.identity);
         updateWaitingPanel();
+        const s = stats.userStats.get(p.identity);
+        if (s) s.isOnline = false;
+        if (attendanceLog.has(p.identity)) attendanceLog.get(p.identity).leftAt = new Date();
+        updateParticipantCount();
+        updateAttendanceUI();
+        updateTeacherPanel();
         updateParticipantsPanel();
         updatePrivateRecipientList();
-        updateAttendanceUI();
-    } catch (error) {
-        console.warn('[Lroom P2P] Presence sync failed', error);
-    } finally {
-        roomPresenceSyncInFlight = false;
-    }
-}
+        setTimeout(() => autoAdjustQuality(false), 500);
+    });
 
-async function setupP2PRealtime() {
-    if (!roomId || !myId || !sb) throw new Error('اطلاعات سیگنال‌دهی کلاس کامل نیست.');
-    const { data: sessionData, error: sessionError } = await sb.auth.getSession();
-    const accessToken = sessionData?.session?.access_token;
-    if (sessionError || !accessToken) throw new Error('نشست ورود معتبر نیست؛ دوباره وارد شوید.');
-    await sb.realtime.setAuth(accessToken);
+    livekitRoom.on(R.TrackSubscribed, (track, pub, p) => {
+        if (track.kind === LivekitClient.Track.Kind.Video && pub.source === LivekitClient.Track.Source.ScreenShare) {
+            showScreenShareInline(p.identity, track, pub, p.name || p.identity);
+            return;
+        }
+        if (track.kind === LivekitClient.Track.Kind.Audio) {
+            const el = track.attach();
+            el.autoplay = true;
+            el.style.display = 'none';
+            el.dataset.identity = p.identity;
+            if (isWaitingForApproval) { el.muted = true; try { el.volume = 0; } catch(e) {} }
+            document.body.appendChild(el);
+            return;
+        }
+        const el = track.attach();
+        el.autoplay = true;
+        el.playsInline = true;
+        el.muted = true;
+        addRemoteVideo(p.identity, el, p.name || p.identity);
+        setTimeout(applyUniformQualityToRemote, 500);
+    });
 
-    const topic = `lroom-room:${roomId}`;
-    roomChannel = sb.channel(topic, {
-        config: {
-            private: true,
-            broadcast: { ack: true, self: false },
-            presence: { key: myId }
+    livekitRoom.on(R.TrackUnsubscribed, (track, pub, p) => {
+        if (track.kind === LivekitClient.Track.Kind.Video && pub.source === LivekitClient.Track.Source.ScreenShare) {
+            removeScreenShareInline(p.identity);
+        }
+        track.detach().forEach(el => el.remove());
+        if (track.kind === LivekitClient.Track.Kind.Video && remoteParticipants.has(p.identity)) {
+            showAvatar(p.identity);
         }
     });
 
-    roomChannel
-        .on('broadcast', { event: 'signal' }, ({ payload }) => {
-            if (!payload || payload.to !== myId || !payload.from || payload.from === myId) return;
-            if (!remoteParticipants.has(payload.from)) return;
-            handleIncomingData(payload.data, payload.from);
-        })
-        .on('presence', { event: 'sync' }, () => { void syncP2PRoomPresence(); })
-        .on('presence', { event: 'join' }, () => { void syncP2PRoomPresence(); })
-        .on('presence', { event: 'leave' }, () => { void syncP2PRoomPresence(); });
-
-    await new Promise((resolve, reject) => {
-        let settled = false;
-        const timeout = setTimeout(() => {
-            if (!settled) { settled = true; reject(new Error('مهلت اتصال سیگنال‌دهی تمام شد. تنظیمات Private Realtime و RLS را بررسی کنید.')); }
-        }, 18000);
-        roomChannel.subscribe(async status => {
-            if (status === 'SUBSCRIBED' && !settled) {
-                try {
-                    const trackResult = await roomChannel.track({ client_id: myId, user_id: currentUser.id, name: myName, role: myRole, joined_at: new Date().toISOString() });
-                    if (trackResult !== 'ok') throw new Error('ثبت حضور در کانال کلاس ناموفق بود.');
-                    // Wait briefly for the presence sync so stale DB members never count as online peers.
-                    let presenceState = roomChannel.presenceState();
-                    for (let attempt = 0; attempt < 8; attempt++) {
-                        const onlineCount = Object.values(presenceState || {}).reduce((sum, entries) => sum + (Array.isArray(entries) ? entries.length : 0), 0);
-                        if (onlineCount > 0 && (myRole !== 'student' || !!presenceState[teacherId])) break;
-                        await new Promise(r => setTimeout(r, 250));
-                        presenceState = roomChannel.presenceState();
-                    }
-                    const onlineCount = Object.values(presenceState || {}).reduce((sum, entries) => sum + (Array.isArray(entries) ? entries.length : 0), 0);
-                    if (myRole === 'student' && !presenceState[teacherId]) throw new Error('مدرس اکنون آنلاین نیست. از مدرس بخواهید ابتدا کلاس را باز کند.');
-                    if (onlineCount > P2P_MAX_PARTICIPANTS) throw new Error(`ظرفیت کلاس P2P حداکثر ${P2P_MAX_PARTICIPANTS} نفر است.`);
-                    settled = true;
-                    clearTimeout(timeout);
-                    await syncP2PRoomPresence();
-                    resolve();
-                } catch (error) {
-                    settled = true; clearTimeout(timeout); reject(error);
-                }
-            } else if (['CHANNEL_ERROR', 'TIMED_OUT', 'CLOSED'].includes(status) && !settled) {
-                settled = true; clearTimeout(timeout);
-                reject(new Error(`اتصال Supabase Realtime برقرار نشد (${status}). SQL مجوزهای Realtime را بررسی کنید.`));
-            }
-        });
+    livekitRoom.on(R.TrackMuted, (pub, p) => {
+        if (pub.kind === LivekitClient.Track.Kind.Audio) updateRemoteMicUI(p.identity, false);
+        else if (pub.kind === LivekitClient.Track.Kind.Video && pub.source === LivekitClient.Track.Source.Camera) showAvatar(p.identity);
     });
-}
+    livekitRoom.on(R.TrackUnmuted, (pub, p) => {
+        if (pub.kind === LivekitClient.Track.Kind.Audio) updateRemoteMicUI(p.identity, true);
+        else if (pub.kind === LivekitClient.Track.Kind.Video && pub.source === LivekitClient.Track.Source.Camera) hideAvatar(p.identity);
+    });
 
-async function sendP2PSignal(peerId, data) {
-    if (!roomChannel || !peerId || !data) return;
-    try {
-        const result = await roomChannel.send({
-            type: 'broadcast', event: 'signal',
-            payload: { from: myId, to: peerId, data }
-        });
-        if (result && result !== 'ok') console.warn('[Lroom P2P] Signal status:', result);
-    } catch (error) {
-        console.warn('[Lroom P2P] Signal send failed', error);
-    }
-}
-
-function bindP2PDataChannel(peerId, state, dataChannel) {
-    state.dataChannel = dataChannel;
-    dataChannel.onopen = () => {
-        if (state.closed) return;
-        const queued = state.pendingMessages.splice(0);
-        for (const message of queued) {
-            try { dataChannel.send(message); } catch (error) { state.pendingMessages.unshift(message); break; }
-        }
-        const greeting = { type: 'hello', name: myName, role: myRole, micOn: !!isMicOn, camOn: !!isCamOn, isWaiting: !!isWaitingForApproval };
-        try { dataChannel.send(JSON.stringify(greeting)); } catch (e) {}
-        hideConnBanner();
-        showToast('🔗 ارتباط مستقیم P2P برقرار شد');
-    };
-    dataChannel.onmessage = event => {
+    livekitRoom.on(R.DataReceived, (payload, p) => {
         try {
-            const message = JSON.parse(event.data);
-            handleIncomingData(message, peerId);
-        } catch (error) { console.warn('[Lroom P2P] Invalid data-channel message', error); }
-    };
-    dataChannel.onerror = error => console.warn('[Lroom P2P] Data channel error', peerId, error);
-    dataChannel.onclose = () => {
-        if (!state.closed && roomChannel) showConnBanner('ارتباط داده با یکی از شرکت‌کنندگان قطع شد.');
-    };
+            const data = JSON.parse(new TextDecoder().decode(payload));
+            handleIncomingData(data, p?.identity);
+        } catch (e) {}
+    });
+
+    livekitRoom.on(R.Disconnected, () => leaveMeeting(true));
+    livekitRoom.on(R.Reconnecting, () => { showConnBanner(t('connReconnect')); });
+    livekitRoom.on(R.Reconnected, () => { hideConnBanner(); showToast(t('connConnected')); });
+    livekitRoom.on(R.ConnectionStateChanged, (state) => {
+        if (state === 'disconnected') showConnBanner(t('connLost'));
+        else if (state === 'connected') hideConnBanner();
+    });
+
+    livekitRoom.on(R.ActiveSpeakersChanged, (speakers) => {
+        try {
+            const activeIdentities = new Set(speakers.map(s => s.identity));
+            remoteParticipants.forEach((_, pid) => {
+                const pub = livekitRoom.remoteParticipants.get(pid)?.getTrackPublication(LivekitClient.Track.Source.Microphone);
+                if (pub) {
+                    const isActive = activeIdentities.has(pid);
+                    if (remoteParticipants.size > 15) pub.setSubscribed(isActive);
+                    else pub.setSubscribed(true);
+                }
+            });
+        } catch (e) {}
+    });
 }
 
 function sendData(data, destinations) {
-    if (!roomChannel || !data) return;
-    if (data.type === 'p2p-description' || data.type === 'p2p-ice') {
-        const targets = destinations?.length ? destinations : Array.from(p2pPeers.keys());
-        targets.forEach(peerId => { void sendP2PSignal(peerId, data); });
-        return;
-    }
-    const targets = destinations?.length ? destinations : Array.from(p2pPeers.keys());
-    const serialized = JSON.stringify(data);
-    for (const peerId of targets) {
-        const state = p2pPeers.get(peerId);
-        if (!state || state.closed) continue;
-        const channel = state.dataChannel;
-        if (channel?.readyState === 'open' && channel.bufferedAmount < 1024 * 1024) {
-            try { channel.send(serialized); }
-            catch (error) { if (state.pendingMessages.length < 100) state.pendingMessages.push(serialized); }
-        } else if (state.pendingMessages.length < 100) {
-            state.pendingMessages.push(serialized);
-        }
-    }
+    if (!livekitRoom) return;
+    try {
+        const payload = new TextEncoder().encode(JSON.stringify(data));
+        const opts = { reliable: true, topic: 'lroom' };
+        if (destinations && destinations.length) opts.destinationIdentities = destinations;
+        livekitRoom.localParticipant.publishData(payload, opts);
+    } catch (e) {}
 }
 function broadcast(data) { sendData(data); }
 function sendTo(id, data) { sendData(data, [id]); }
-
-function canSendP2PTrack(kind) {
-    if (!localStream || isWaitingForApproval) return false;
-    if (kind === 'audio') return !!isMicOn && (myRole === 'teacher' || isCoTeacher || !!myPermissions.mic);
-    if (kind === 'video') return !!isCamOn && (myRole === 'teacher' || isCoTeacher || !!myPermissions.cam);
-    return false;
-}
-
-
-
-function ensureP2PPeer(peerId) {
-    if (!peerId || peerId === myId || !roomChannel || !remoteParticipants.has(peerId)) return p2pPeers.get(peerId);
-    if (p2pPeers.has(peerId)) return p2pPeers.get(peerId);
-    if (typeof RTCPeerConnection !== 'function') throw new Error('WebRTC در این مرورگر در دسترس نیست.');
-
-    const pc = new RTCPeerConnection({ iceServers: getP2PIceServers(), bundlePolicy: 'max-bundle' });
-    const state = {
-        pc,
-        polite: String(myId).localeCompare(String(peerId)) > 0,
-        makingOffer: false,
-        ignoreOffer: false,
-        isSettingRemoteAnswerPending: false,
-        pendingCandidates: [],
-        pendingMessages: [],
-        dataChannel: null,
-        remoteStream: new MediaStream(),
-        restartAttempts: 0,
-        closed: false
-    };
-    p2pPeers.set(peerId, state);
-
-    // One side creates the reliable peer data channel; media remains direct WebRTC.
-    if (String(myId).localeCompare(String(peerId)) < 0) {
-        bindP2PDataChannel(peerId, state, pc.createDataChannel('lroom-control', { ordered: true }));
-    }
-
-    pc.ondatachannel = event => bindP2PDataChannel(peerId, state, event.channel);
-    pc.onicecandidate = event => {
-        if (event.candidate && !state.closed) {
-            sendTo(peerId, { type: 'p2p-ice', candidate: event.candidate.toJSON ? event.candidate.toJSON() : event.candidate });
-        }
-    };
-    pc.onnegotiationneeded = async () => {
-        if (state.closed) return;
-        try {
-            state.makingOffer = true;
-            await pc.setLocalDescription();
-            sendTo(peerId, {
-                type: 'p2p-description',
-                description: pc.localDescription.toJSON ? pc.localDescription.toJSON() : pc.localDescription,
-                screenStreamId: localP2PScreenStream?.id || null
-            });
-        } catch (error) {
-            console.warn('[Lroom P2P] Negotiation failed', peerId, error);
-            showConnBanner('مذاکرهٔ WebRTC ناموفق بود؛ اتصال را دوباره امتحان می‌کنیم.');
-        } finally { state.makingOffer = false; }
-    };
-    pc.ontrack = event => {
-        const stream = event.streams?.[0] || state.remoteStream;
-        if (!event.streams?.[0] && !state.remoteStream.getTracks().some(track => track.id === event.track.id)) state.remoteStream.addTrack(event.track);
-        const info = remoteParticipants.get(peerId) || {};
-        const remoteName = info.name || peerId;
-        if (event.track.kind === 'audio') {
-            let audio = p2pRemoteAudio.get(peerId);
-            if (!audio) {
-                audio = document.createElement('audio');
-                audio.autoplay = true; audio.playsInline = true;
-                audio.dataset.identity = peerId; audio.dataset.p2pIdentity = peerId;
-                audio.style.display = 'none'; document.body.appendChild(audio);
-                p2pRemoteAudio.set(peerId, audio);
-            }
-            audio.srcObject = stream;
-            audio.play().catch(() => showToast('برای شنیدن صدا، یک‌بار روی صفحه کلیک کنید.'));
-        } else if (event.track.kind === 'video') {
-            if (p2pRemoteScreenStreamIds.get(peerId) && stream.id === p2pRemoteScreenStreamIds.get(peerId)) {
-                showP2PScreenShare(peerId, stream, remoteName);
-            } else {
-                let video = document.querySelector(`#video-${CSS.escape(peerId)} video:not(.ss-video)`);
-                if (!video) {
-                    video = document.createElement('video');
-                    video.autoplay = true; video.playsInline = true; video.muted = true;
-                    video.dataset.p2pIdentity = peerId;
-                    addRemoteVideo(peerId, video, remoteName);
-                }
-                video.srcObject = stream;
-                video.play().catch(() => {});
-            }
-        }
-        event.track.onended = () => {
-            if (event.track.kind === 'audio') {
-                const audio = p2pRemoteAudio.get(peerId);
-                if (audio) { audio.srcObject = null; audio.remove(); p2pRemoteAudio.delete(peerId); }
-            }
-        };
-    };
-    pc.onconnectionstatechange = () => {
-        if (state.closed) return;
-        if (pc.connectionState === 'connected') {
-            state.restartAttempts = 0;
-            hideConnBanner();
-            updateMediaTransportBadge();
-        } else if (pc.connectionState === 'failed') {
-            showConnBanner('اتصال مستقیم شکست خورد؛ تلاش برای بازسازی مسیر P2P...');
-            if (state.restartAttempts < 2) {
-                state.restartAttempts++;
-                try { pc.restartIce(); } catch (error) { console.warn('[Lroom P2P] ICE restart failed', error); }
-            } else {
-                showToast('اتصال مستقیم برقرار نشد. احتمالاً این شبکه به TURN نیاز دارد.');
-            }
-        } else if (pc.connectionState === 'disconnected') {
-            showConnBanner('ارتباط مستقیم ناپایدار است؛ در حال بررسی...');
-            setTimeout(() => {
-                if (!state.closed && pc.connectionState === 'disconnected' && state.restartAttempts < 2) {
-                    state.restartAttempts++;
-                    try { pc.restartIce(); } catch (error) {}
-                }
-            }, 2500);
-        }
-    };
-    pc.oniceconnectionstatechange = () => {
-        if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') hideConnBanner();
-    };
-    syncP2PPeerTracks(peerId);
-    return state;
-}
-
-function syncP2PPeerTracks(peerId) {
-    if (!roomChannel || !localStream) return;
-    const entries = peerId ? [[peerId, p2pPeers.get(peerId)]] : Array.from(p2pPeers.entries());
-    for (const [id, state] of entries) {
-        if (!state || state.closed || !state.pc) continue;
-        for (const track of localStream.getTracks()) {
-            const allowed = canSendP2PTrack(track.kind);
-            const sender = state.pc.getSenders().find(item => item.track && item.track.id === track.id);
-            if (allowed && !sender) {
-                try { state.pc.addTrack(track, localStream); }
-                catch (error) { console.warn('[Lroom P2P] addTrack failed', id, error); }
-            } else if (sender?.track) {
-                sender.track.enabled = allowed;
-            }
-        }
-        if (localP2PScreenStream) {
-            for (const screenTrack of localP2PScreenStream.getTracks()) {
-                const screenSender = state.pc.getSenders().find(item => item.track && item.track.id === screenTrack.id);
-                if (!screenSender) {
-                    try { state.pc.addTrack(screenTrack, localP2PScreenStream); }
-                    catch (error) { console.warn('[Lroom P2P] screen addTrack failed', id, error); }
-                }
-            }
-        }
-    }
-}
-
-async function handleP2PDescription(senderId, description, screenStreamId) {
-    if (!description || !['offer', 'answer'].includes(description.type) || !remoteParticipants.has(senderId)) return;
-    const state = ensureP2PPeer(senderId);
-    if (!state) return;
-    const pc = state.pc;
-    if (typeof screenStreamId === 'string' && screenStreamId) p2pRemoteScreenStreamIds.set(senderId, screenStreamId);
-    else p2pRemoteScreenStreamIds.delete(senderId);
-    const readyForOffer = !state.makingOffer && (pc.signalingState === 'stable' || state.isSettingRemoteAnswerPending);
-    const offerCollision = description.type === 'offer' && !readyForOffer;
-    state.ignoreOffer = !state.polite && offerCollision;
-    if (state.ignoreOffer) return;
-    try {
-        state.isSettingRemoteAnswerPending = description.type === 'answer';
-        await pc.setRemoteDescription(description);
-        state.isSettingRemoteAnswerPending = false;
-        for (const candidate of state.pendingCandidates.splice(0)) {
-            try { await pc.addIceCandidate(candidate); }
-            catch (error) { if (!state.ignoreOffer) console.warn('[Lroom P2P] queued ICE rejected', error); }
-        }
-        if (description.type === 'offer') {
-            await pc.setLocalDescription();
-            sendTo(senderId, {
-                type: 'p2p-description',
-                description: pc.localDescription.toJSON ? pc.localDescription.toJSON() : pc.localDescription,
-                screenStreamId: localP2PScreenStream?.id || null
-            });
-        }
-    } catch (error) {
-        state.isSettingRemoteAnswerPending = false;
-        console.warn('[Lroom P2P] Remote description failed', error);
-        showToast('مذاکرهٔ اتصال مستقیم ناموفق شد. دوباره تلاش کنید.');
-    }
-}
-
-async function handleP2PIce(senderId, candidate) {
-    if (!candidate || typeof candidate.candidate !== 'string' || !remoteParticipants.has(senderId)) return;
-    const state = ensureP2PPeer(senderId);
-    if (!state) return;
-    try {
-        if (state.pc.remoteDescription?.type) await state.pc.addIceCandidate(candidate);
-        else state.pendingCandidates.push(candidate);
-    } catch (error) {
-        if (!state.ignoreOffer) console.warn('[Lroom P2P] ICE candidate rejected', error);
-    }
-}
-
-function closeP2PPeer(peerId) {
-    const state = p2pPeers.get(peerId);
-    if (state) {
-        state.closed = true;
-        try { if (state.dataChannel) { state.dataChannel.onmessage = null; state.dataChannel.close(); } } catch (e) {}
-        try { state.pc.ontrack = null; state.pc.onicecandidate = null; state.pc.onnegotiationneeded = null; state.pc.close(); } catch (e) {}
-        p2pPeers.delete(peerId);
-    }
-    const audio = p2pRemoteAudio.get(peerId);
-    if (audio) { try { audio.pause(); audio.srcObject = null; audio.remove(); } catch (e) {} p2pRemoteAudio.delete(peerId); }
-}
-
-
-
-function showP2PScreenShare(pid, stream, name) {
-    const isSelf = pid === myId;
-    let box = isSelf ? document.getElementById('video-me') : document.getElementById(`video-${pid}`);
-    if (!box && !isSelf) {
-        const placeholder = document.createElement('video');
-        placeholder.autoplay = true; placeholder.playsInline = true; placeholder.muted = true;
-        addRemoteVideo(pid, placeholder, name || pid);
-        box = document.getElementById(`video-${pid}`);
-    }
-    if (!box) return;
-    const camVideo = box.querySelector('video:not(.ss-video)'); if (camVideo) camVideo.style.display = 'none';
-    const avatar = box.querySelector('.avatar'); if (avatar) avatar.style.display = 'none';
-    let screenVideo = box.querySelector('.ss-video');
-    if (!screenVideo) { screenVideo = document.createElement('video'); screenVideo.className = 'ss-video'; box.appendChild(screenVideo); }
-    screenVideo.autoplay = true; screenVideo.playsInline = true; screenVideo.muted = true;
-    screenVideo.dataset.p2pIdentity = isSelf ? '' : pid;
-    screenVideo.srcObject = stream;
-    screenVideo.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;z-index:2;';
-    screenVideo.play().catch(() => {});
-    box.classList.add('screensharing');
-    if (!box.querySelector('.ss-badge')) {
-        const badge = document.createElement('div'); badge.className = 'ss-badge';
-        badge.textContent = '🖥️ Screen' + (isSelf ? ' (You)' : ''); box.appendChild(badge);
-    }
-}
 
 function showScreenShareInline(pid, track, pub, name) {
     const isSelf = pid === myId;
@@ -3040,23 +2808,11 @@ function handleIncomingData(data, senderId) {
     if (senderId === myId) return;
 
     const info = remoteParticipants.get(senderId) || {};
-    // The room membership table records the verified teacher and students.
-    const verifiedRole = senderId === teacherId ? 'teacher' : (remoteParticipants.get(senderId)?.role || 'student');
+    // The token service reserves teacher-<room> for the verified room owner.
+    const verifiedRole = senderId === teacherId ? 'teacher' : 'student';
     const trusted = isTrustedSender(senderId);
 
     switch (data.type) {
-        case 'p2p-description':
-            if (mediaTransportMode === 'p2p') handleP2PDescription(senderId, data.description, data.screenStreamId);
-            break;
-        case 'p2p-ice':
-            if (mediaTransportMode === 'p2p') handleP2PIce(senderId, data.candidate);
-            break;
-        case 'room-closed':
-            if (senderId === teacherId) {
-                showToast('مدرس کلاس را بست.');
-                setTimeout(() => leaveMeeting(true), 250);
-            }
-            break;
         case 'hello': {
             if (!data.name || typeof data.name !== 'string') break;
             const safeName = sanitizeName(data.name);
@@ -3081,7 +2837,6 @@ function handleIncomingData(data, senderId) {
                 camOn: !!data.camOn,
                 handRaised: false
             });
-            if (remoteParticipants.has(senderId)) ensureP2PPeer(senderId);
 
             if ((myRole === 'teacher' || isCoTeacher) && verifiedRole === 'student') {
                 if (!studentPermissions.has(senderId)) {
@@ -3103,6 +2858,7 @@ function handleIncomingData(data, senderId) {
                     if (!projCurrentState) projCurrentState = { isPlaying: false, currentTime: 0, mediaId: projCurrentMedia.mediaId };
                     sendTo(senderId, { type: 'proj-media', media: projCurrentMedia, state: projCurrentState });
                 }
+                if (isRecording) sendTo(senderId, { type: 'recording-started' });
                 if (currentPoll) sendTo(senderId, { type: 'poll-new', poll: currentPoll });
                 if (breakoutGroups) sendTo(senderId, { type: 'breakout-groups', groups: breakoutGroups });
                 sendTo(senderId, { type: 'quality-settings', settings: qualitySettings, from: myId });
@@ -3180,19 +2936,15 @@ function handleIncomingData(data, senderId) {
             receiveSpotlightClear();
             break;
         case 'screen-share-started':
-            if (typeof data.streamId === 'string' && data.streamId) p2pRemoteScreenStreamIds.set(senderId, data.streamId);
-            if (remoteParticipants.has(data.id || senderId)) {
-                const pid = data.id || senderId;
-                const i = remoteParticipants.get(pid);
-                remoteParticipants.set(pid, { ...i, camOn: false });
-                updateRemoteCamUI(pid, false);
+            if (remoteParticipants.has(data.id)) {
+                const i = remoteParticipants.get(data.id);
+                remoteParticipants.set(data.id, { ...i, camOn: false });
+                updateRemoteCamUI(data.id, false);
                 updateParticipantsPanel();
             }
-            showToast('🖥️ ' + (remoteParticipants.get(senderId)?.name || 'Participant') + ' is sharing a screen');
+            showToast('🖥️ ' + (remoteParticipants.get(data.id)?.name || 'کاربر') + ' در حال اشتراک صفحه');
             break;
         case 'screen-share-stopped':
-            p2pRemoteScreenStreamIds.delete(senderId);
-            removeScreenShareInline(senderId);
             break;
         case 'permission-request':
             if (myRole === 'student' && trusted && ['mic', 'cam'].includes(data.permission)) showPermissionRequestModal(data.permission);
@@ -3313,25 +3065,17 @@ function handleIncomingData(data, senderId) {
         case 'permission-revoked': {
             if (myRole !== 'student' || !trusted || !['mic', 'cam', 'whiteboard', 'projector'].includes(data.permission)) return;
             myPermissions[data.permission] = false;
-            if (data.permission === 'mic') {
-                isMicOn = false; localStream?.getAudioTracks().forEach(t => t.enabled = false);
-                syncP2PPeerTracks();
-                broadcast({ type: 'mic', on: false });
-            }
-            if (data.permission === 'cam') {
-                isCamOn = false; localStream?.getVideoTracks().forEach(t => t.enabled = false);
-                syncP2PPeerTracks();
-                broadcast({ type: 'cam', on: false });
-            }
-            updateMicUI(); updateCamUI();
+            updateMicUI();
+            updateCamUI();
             break;
         }
         case 'force-mute': {
             if (!trusted) return;
             if (isMicOn) {
                 isMicOn = false;
-                localStream?.getAudioTracks().forEach(t => t.enabled = false);
-                syncP2PPeerTracks();
+                const lp = livekitRoom?.localParticipant;
+                const pub = lp?.getTrackPublication(LivekitClient.Track.Source.Microphone);
+                if (pub) pub.mute();
             }
             updateMicUI();
             updateParticipantsPanel();
@@ -3342,8 +3086,9 @@ function handleIncomingData(data, senderId) {
             if (!trusted) return;
             if (isCamOn) {
                 isCamOn = false;
-                localStream?.getVideoTracks().forEach(t => t.enabled = false);
-                syncP2PPeerTracks();
+                const lp = livekitRoom?.localParticipant;
+                const pub = lp?.getTrackPublication(LivekitClient.Track.Source.Camera);
+                if (pub) pub.mute();
             }
             updateCamUI();
             updateParticipantsPanel();
@@ -3430,6 +3175,16 @@ function handleIncomingData(data, senderId) {
         case 'lock-room':
             if (!trusted) return;
             isRoomLocked = !!data.locked;
+            break;
+        case 'recording-started':
+            if (!trusted) return;
+            document.getElementById('recordingIndicator').classList.add('active');
+            startFakeRecTimer();
+            break;
+        case 'recording-stopped':
+            if (!trusted) return;
+            document.getElementById('recordingIndicator').classList.remove('active');
+            stopFakeRecTimer();
             break;
         case 'poll-new':
             if (!trusted) return;
@@ -3639,39 +3394,37 @@ function updateWaitingPanel() {
     `).join('');
 }
 
-async function admitUser(pid) {
-    if (!isPrivileged() || myRole !== 'teacher') return;
-    const request = waitingList.get(pid);
-    if (!request) return showToast('این درخواست دیگر در صف نیست.');
-    if (isRoomLocked) return showToast('ابتدا قفل کلاس را باز کنید تا دانشجو را بپذیرید.');
-    try {
-        const { data, error } = await sb.from('lroom_room_members')
-            .update({ status: 'admitted' })
-            .eq('room_code', roomId).eq('client_id', pid).eq('status', 'pending')
-            .select('client_id');
-        if (error) throw error;
-        if (!data || !data.length) throw new Error('درخواست دیگر در صف انتظار نیست.');
-        waitingList.delete(pid);
-        updateWaitingPanel();
-        showToast(`✅ درخواست ${request.name} تأیید شد.`);
-    } catch (error) {
-        showToast('❌ تأیید ورود ناموفق بود: ' + (error.message || error));
-    }
+function admitUser(pid) {
+    if (!isPrivileged()) return;
+    const w = waitingList.get(pid) || { name: '?' };
+    waitingList.delete(pid);
+    pendingAdmits.set(pid, { name: w.name, tries: 0 });
+    _doAdmit(pid);
+    updateWaitingPanel();
+    showToast(`✅ تایید شد — ${w.name}`);
 }
 
-async function denyUser(pid) {
-    if (!isPrivileged() || myRole !== 'teacher') return;
-    try {
-        const { error } = await sb.from('lroom_room_members')
-            .update({ status: 'denied' })
-            .eq('room_code', roomId).eq('client_id', pid).eq('status', 'pending');
-        if (error) throw error;
-        waitingList.delete(pid);
-        updateWaitingPanel();
-        showToast('درخواست ورود رد شد.');
-    } catch (error) {
-        showToast('❌ رد درخواست ناموفق بود: ' + (error.message || error));
+function _doAdmit(pid) {
+    const rec = pendingAdmits.get(pid);
+    if (!rec) return;
+    rec.tries++;
+    sendTo(pid, { type: 'admit' });
+    if (rec.tries >= 8) {
+        pendingAdmits.delete(pid);
+        showToast('⚠️ اتصال دانشجو پاسخ نداد');
+        return;
     }
+    setTimeout(() => {
+        if (pendingAdmits.has(pid)) _doAdmit(pid);
+    }, 1500);
+}
+
+function denyUser(pid) {
+    if (!isPrivileged()) return;
+    sendTo(pid, { type: 'deny' });
+    waitingList.delete(pid);
+    pendingAdmits.delete(pid);
+    updateWaitingPanel();
 }
 
 function cancelWaiting() {
@@ -4036,13 +3789,23 @@ async function toggleMic() {
     else requestPermission('mic');
 }
 async function actuallyToggleMic() {
-    if (!roomChannel || !localStream) return;
-    const track = localStream.getAudioTracks()[0];
-    if (!track) { showToast('⚠️ میکروفون در دسترس نیست'); return; }
+    const lp = livekitRoom?.localParticipant;
+    if (!lp) return;
     isMicOn = !isMicOn;
-    track.enabled = isMicOn;
-    syncP2PPeerTracks();
-    updateMicUI(); updateParticipantsPanel(); broadcast({ type: 'mic', on: isMicOn });
+    try {
+        if (isMicOn) {
+            const pub = lp.getTrackPublication(LivekitClient.Track.Source.Microphone);
+            if (pub) await pub.unmute();
+            else if (localStream?.getAudioTracks()[0]) await lp.publishTrack(localStream.getAudioTracks()[0], { name: 'microphone', source: LivekitClient.Track.Source.Microphone });
+            else { showToast('⚠️ میکروفون در دسترس نیست'); isMicOn = false; return; }
+        } else {
+            const pub = lp.getTrackPublication(LivekitClient.Track.Source.Microphone);
+            if (pub) await pub.mute();
+        }
+    } catch (e) { isMicOn = !isMicOn; return; }
+    updateMicUI();
+    updateParticipantsPanel();
+    broadcast({ type: 'mic', on: isMicOn });
     if (!isMicOn) {
         lastSpeakingState = false;
         broadcast({ type: 'speaking', speaking: false, from: myId });
@@ -4055,13 +3818,23 @@ async function toggleCam() {
     else requestPermission('cam');
 }
 async function actuallyToggleCam() {
-    if (!roomChannel || !localStream) return;
-    const track = localStream.getVideoTracks()[0];
-    if (!track) { showToast('⚠️ دوربین در دسترس نیست'); return; }
+    const lp = livekitRoom?.localParticipant;
+    if (!lp) return;
     isCamOn = !isCamOn;
-    track.enabled = isCamOn;
-    syncP2PPeerTracks();
-    updateCamUI(); updateParticipantsPanel(); broadcast({ type: 'cam', on: isCamOn });
+    try {
+        if (isCamOn) {
+            const pub = lp.getTrackPublication(LivekitClient.Track.Source.Camera);
+            if (pub) await pub.unmute();
+            else if (localStream?.getVideoTracks()[0]) await lp.publishTrack(localStream.getVideoTracks()[0], { name: 'camera', source: LivekitClient.Track.Source.Camera });
+            else { showToast('⚠️ دوربین در دسترس نیست'); isCamOn = false; return; }
+        } else {
+            const pub = lp.getTrackPublication(LivekitClient.Track.Source.Camera);
+            if (pub) await pub.mute();
+        }
+    } catch (e) { isCamOn = !isCamOn; return; }
+    updateCamUI();
+    updateParticipantsPanel();
+    broadcast({ type: 'cam', on: isCamOn });
     if (isCamOn) setTimeout(() => broadcast({ type: 'quality-sync-request', from: myId }), 500);
 }
 
@@ -4074,54 +3847,42 @@ function requestPermission(type) {
 }
 
 async function forceCameraOff() {
-    if (!isCamOn || !roomChannel) return;
+    if (!isCamOn) return;
+    const lp = livekitRoom?.localParticipant;
+    if (!lp) return;
     isCamOn = false;
-    localStream?.getVideoTracks().forEach(track => track.enabled = false);
-    syncP2PPeerTracks();
-    updateCamUI(); updateParticipantsPanel();
+    try {
+        const pub = lp.getTrackPublication(LivekitClient.Track.Source.Camera);
+        if (pub) await pub.mute();
+    } catch (e) {}
+    updateCamUI();
+    updateParticipantsPanel();
     broadcast({ type: 'cam', on: false });
 }
 
 async function toggleScreen() {
-    if (!roomChannel) return;
+    const lp = livekitRoom?.localParticipant;
+    if (!lp) return;
     if (isSharing) {
-        const screenTrack = localP2PScreenStream?.getVideoTracks()[0];
-        if (screenTrack) {
-            for (const state of p2pPeers.values()) {
-                const sender = state.pc.getSenders().find(item => item.track && item.track.id === screenTrack.id);
-                if (sender) { try { state.pc.removeTrack(sender); } catch (e) {} }
-            }
-        }
-        if (localP2PScreenStream) localP2PScreenStream.getTracks().forEach(track => { try { track.stop(); } catch (e) {} });
-        localP2PScreenStream = null;
+        try { await lp.setScreenShareEnabled(false); } catch (e) {}
         isSharing = false;
-        document.getElementById('btnScreen')?.classList.remove('on');
+        document.getElementById('btnScreen').classList.remove('on');
         removeScreenShareInline(myId);
         broadcast({ type: 'screen-share-stopped', id: myId });
-        syncP2PPeerTracks();
-        showToast('اشتراک صفحه متوقف شد.');
-        return;
-    }
-
-    try {
-        await forceCameraOff();
-        if (!navigator.mediaDevices?.getDisplayMedia) throw new Error('اشتراک صفحه فقط در مرورگر پشتیبانی‌شده و HTTPS فعال است.');
-        localP2PScreenStream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: { ideal: 15, max: 30 } }, audio: false });
-        const screenTrack = localP2PScreenStream.getVideoTracks()[0];
-        if (!screenTrack) throw new Error('تصویر صفحه دریافت نشد.');
-        try { screenTrack.contentHint = 'detail'; } catch (e) {}
-        isSharing = true;
-        document.getElementById('btnScreen')?.classList.add('on');
-        showP2PScreenShare(myId, localP2PScreenStream, myName);
-        syncP2PPeerTracks();
-        broadcast({ type: 'screen-share-started', id: myId, streamId: localP2PScreenStream.id });
-        screenTrack.onended = () => { if (isSharing) void toggleScreen(); };
-        showToast('اشتراک صفحه به‌صورت مستقیم P2P شروع شد.');
-    } catch (error) {
-        if (localP2PScreenStream) localP2PScreenStream.getTracks().forEach(track => { try { track.stop(); } catch (e) {} });
-        localP2PScreenStream = null; isSharing = false;
-        document.getElementById('btnScreen')?.classList.remove('on');
-        showToast('❌ ' + (error.message || 'اشتراک صفحه ناموفق بود.'));
+        showToast('🖥️ اشتراک قطع شد');
+    } else {
+        try {
+            await forceCameraOff();
+            await lp.setScreenShareEnabled(true);
+            isSharing = true;
+            document.getElementById('btnScreen').classList.add('on');
+            broadcast({ type: 'screen-share-started', id: myId });
+            showToast('🖥️ شروع اشتراک — دوربین خاموش شد');
+            setTimeout(() => {
+                const ssPub = lp.getTrackPublication(LivekitClient.Track.Source.ScreenShare);
+                if (ssPub && ssPub.track) showScreenShareInline(myId, ssPub.track, ssPub, myName);
+            }, 500);
+        } catch (e) { showToast('❌ ' + (e.message || 'خطا')); }
     }
 }
 
@@ -4150,7 +3911,32 @@ async function toggleLowBandwidth() {
     }
 }
 
-
+async function toggleBackgroundBlur() {
+    if (!livekitRoom || !livekitRoom.localParticipant) return;
+    const btn = document.getElementById('btnBlur');
+    const lp = livekitRoom.localParticipant;
+    const videoPub = lp.getTrackPublication(LivekitClient.Track.Source.Camera);
+    if (!videoPub || !videoPub.track) { showToast('⚠️ اول دوربین رو روشن کن'); return; }
+    try {
+        if (!isBlurEnabled) {
+            await ensureLiveKitTrackProcessors();
+            const ProcessorLibrary = window.LivekitTrackProcessors || window.LiveKitTrackProcessors || window.livekitTrackProcessors || LivekitClient;
+            const BackgroundBlurClass = ProcessorLibrary?.BackgroundBlur || LivekitClient.BackgroundBlur;
+            if (typeof BackgroundBlurClass !== 'function') { showToast('⚠️ کتابخانهٔ محو پس‌زمینه در دسترس نیست'); return; }
+            blurProcessor = new BackgroundBlurClass(10);
+            await lp.setTrackProcessor(LivekitClient.Track.Source.Camera, blurProcessor);
+            isBlurEnabled = true;
+            btn.classList.add('on');
+            showToast('🌫️ پس‌زمینه تار شد');
+        } else {
+            await lp.setTrackProcessor(LivekitClient.Track.Source.Camera, null);
+            blurProcessor = null;
+            isBlurEnabled = false;
+            btn.classList.remove('on');
+            showToast('✅ پس‌زمینه عادی');
+        }
+    } catch (e) { showToast('❌ ' + e.message); }
+}
 
 function getStudentCamConstraints(level) {
     switch (level) {
@@ -4187,19 +3973,19 @@ function getAutoQualityRules(participantCount) {
 }
 
 function applyUniformQualityToRemote() {
-    const bitrateByQuality = { low: 180000, medium: 450000, high: 900000 };
-    const maxBitrate = bitrateByQuality[qualitySettings.studentCam] || bitrateByQuality.medium;
-    for (const state of p2pPeers.values()) {
-        for (const sender of state.pc.getSenders()) {
-            if (sender.track?.kind !== 'video') continue;
-            try {
-                const params = sender.getParameters();
-                if (!params.encodings || !params.encodings.length) params.encodings = [{}];
-                params.encodings[0].maxBitrate = maxBitrate;
-                void sender.setParameters(params).catch(() => {});
-            } catch (error) {}
-        }
-    }
+    if (!livekitRoom) return;
+    const q = qualitySettings.studentCam;
+    const qualityMap = { low: LivekitClient.VideoQuality.LOW, medium: LivekitClient.VideoQuality.MEDIUM, high: LivekitClient.VideoQuality.HIGH };
+    const vq = qualityMap[q] || LivekitClient.VideoQuality.MEDIUM;
+    try {
+        livekitRoom.remoteParticipants.forEach(p => {
+            p.videoTrackPublications.forEach(pub => {
+                if (pub.source === LivekitClient.Track.Source.Camera) {
+                    try { pub.setVideoQuality(vq); } catch(e) {}
+                }
+            });
+        });
+    } catch(e) {}
 }
 
 function autoAdjustQuality(force) {
@@ -4267,22 +4053,10 @@ function startQualityCheck() {
         remoteParticipants.forEach((_, p) => checkConnectionQuality(p));
     }, 5000);
 }
-async function checkConnectionQuality(pid) {
-    const state = p2pPeers.get(pid);
-    if (!state) { updateQualityBars(pid, null); return; }
-    let rttSeconds = null;
-    try {
-        const statsReport = await state.pc.getStats();
-        statsReport.forEach(report => {
-            if (report.type === 'candidate-pair' && report.state === 'succeeded' && report.nominated && typeof report.currentRoundTripTime === 'number') {
-                rttSeconds = report.currentRoundTripTime;
-            }
-        });
-    } catch (error) {}
-    qualityCache.set(pid, rttSeconds);
-    updateQualityBars(pid, rttSeconds);
+function checkConnectionQuality(pid) {
+    qualityCache.set(pid, 0.1);
+    updateQualityBars(pid, 0.1);
 }
-
 function updateQualityBars(pid, rtt) {
     const el = document.getElementById(`quality-${pid}`);
     if (!el) return;
@@ -5011,9 +4785,7 @@ function displayMessage(name, msg, isSelf, isPriv) {
 
 const EMOJIS = ['😀','😃','😄','😁','😆','😅','🤣','😂','🙂','🙃','😉','😊','😇','🥰','😍','🤩','😘','😋','😛','😜','🤪','🤗','🤭','🤫','🤔','😐','😑','😶','😏','😒','🙄','😬','😌','😔','😪','😴','😷','🤒','🤕','🤢','🤮','🥵','🥶','😵','🤯','🤠','🥳','😎','🤓','🧐','😕','😟','🙁','😮','😲','😳','🥺','😨','😰','😥','😢','😭','😱','😖','😣','😞','😓','😩','😫','😤','😡','😠','🤬','😈','👿','💀','💩','🤡','👻','👽','🤖','👍','👎','👏','🙌','🙏','❤️','🧡','💛','💚','💙','💜','🖤','🤍','💔','✅','❌','⭐','🔥','🎉','🎊','🎁','💯','💢','⚠️','🔔','📣','💬','💭'];
 
-let emojiPickerInitialized = false;
 function toggleEmojiPicker() {
-    if (!emojiPickerInitialized) { setupEmojiPicker(); emojiPickerInitialized = true; }
     document.getElementById('emojiPicker').classList.toggle('open');
 }
 function setupEmojiPicker() {
@@ -5189,6 +4961,164 @@ function hideAnnouncement(removeAll) {
     if (removeAll && isPrivileged()) broadcast({ type: 'announcement-hide' });
 }
 
+async function toggleRecording() {
+    if (myRole !== 'teacher') return;
+    if (isRecording) stopRecording();
+    else await startRecording();
+}
+
+async function startRecording() {
+    if (typeof HTMLCanvasElement.prototype.captureStream !== 'function' || typeof MediaRecorder === 'undefined') {
+        showToast('⚠️ ضبط در این مرورگر پشتیبانی نمی‌شود');
+        return;
+    }
+    try {
+        compositeCanvas = document.createElement('canvas');
+        compositeCanvas.width = 1280;
+        compositeCanvas.height = 720;
+        compositeCtx = compositeCanvas.getContext('2d');
+        const recCtx = new (window.AudioContext || window.webkitAudioContext)();
+        audioDestination = recCtx.createMediaStreamDestination();
+        const ma = localStream?.getAudioTracks()[0];
+        if (ma) {
+            const s = recCtx.createMediaStreamSource(new MediaStream([ma]));
+            s.connect(audioDestination);
+        }
+        audioContext = recCtx;
+        const cs = compositeCanvas.captureStream(25);
+        const cmb = new MediaStream([...cs.getVideoTracks(), ...audioDestination.stream.getAudioTracks()]);
+        drawCompositeLoop();
+        const fmts = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
+        for (const f of fmts) {
+            if (MediaRecorder.isTypeSupported(f)) { recordingMimeType = f; break; }
+        }
+        mediaRecorder = new MediaRecorder(cmb, { mimeType: recordingMimeType, videoBitsPerSecond: 2500000, audioBitsPerSecond: 128000 });
+        recordedChunks = [];
+        mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+        mediaRecorder.onstop = () => {
+            recordingBlob = new Blob(recordedChunks, { type: recordingMimeType });
+            document.getElementById('recordingModal').classList.add('open');
+        };
+        mediaRecorder.start(1000);
+        isRecording = true;
+        recordingStartTime = Date.now();
+        document.getElementById('recordingIndicator').classList.add('active');
+        const bp = document.getElementById('btnRecordPanel');
+        if (bp) { bp.textContent = '⏹️ توقف ضبط'; bp.classList.add('recording'); }
+        startRecTimer();
+        broadcast({ type: 'recording-started' });
+    } catch (e) {
+        showToast('❌ ' + e.message);
+        cleanupRec();
+    }
+}
+
+function stopRecording() {
+    if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
+    try { mediaRecorder.stop(); } catch (e) {}
+    isRecording = false;
+    document.getElementById('recordingIndicator').classList.remove('active');
+    const bp = document.getElementById('btnRecordPanel');
+    if (bp) { bp.textContent = '🎥 شروع ضبط'; bp.classList.remove('recording'); }
+    stopRecTimer();
+    broadcast({ type: 'recording-stopped' });
+    cleanupRec();
+}
+
+function cleanupRec() {
+    if (compositeAnimationId) { cancelAnimationFrame(compositeAnimationId); compositeAnimationId = null; }
+    if (audioContext && audioContext.state !== 'closed') audioContext.close().catch(() => {});
+    audioContext = null;
+    audioDestination = null;
+    mediaRecorder = null;
+}
+
+function drawCompositeLoop() {
+    if (!compositeCtx || !compositeCanvas) return;
+    const W = compositeCanvas.width, H = compositeCanvas.height;
+    compositeCtx.fillStyle = '#1a1a2e';
+    compositeCtx.fillRect(0, 0, W, H);
+    const all = [];
+    const mv = document.querySelector('#video-me video:not(.ss-video)');
+    if (mv && mv.readyState >= 2 && isCamOn) all.push({ video: mv });
+    remoteParticipants.forEach((i, p) => {
+        const v = document.querySelector(`#video-${CSS.escape(p)} video:not(.ss-video)`);
+        if (v && v.readyState >= 2 && i.camOn) all.push({ video: v });
+    });
+    const n = all.length;
+    if (n === 0) { compositeAnimationId = requestAnimationFrame(drawCompositeLoop); return; }
+    let cols, rows;
+    if (n === 1) { cols = 1; rows = 1; }
+    else if (n === 2) { cols = 2; rows = 1; }
+    else if (n <= 4) { cols = 2; rows = 2; }
+    else if (n <= 6) { cols = 3; rows = 2; }
+    else { cols = 3; rows = 3; }
+    const cw = W / cols, ch = H / rows;
+    all.forEach((item, i) => {
+        const c = i % cols, r = Math.floor(i / cols);
+        const x = c * cw, y = r * ch;
+        const vw = item.video.videoWidth || 16, vh = item.video.videoHeight || 9;
+        const va = vw / vh, ca = cw / ch;
+        let dw, dh, dx, dy;
+        if (va > ca) { dw = cw; dh = cw / va; dx = x; dy = y + (ch - dh) / 2; }
+        else { dh = ch; dw = ch * va; dx = x + (cw - dw) / 2; dy = y; }
+        try { compositeCtx.drawImage(item.video, dx, dy, dw, dh); } catch (e) {}
+    });
+    compositeCtx.fillStyle = 'rgba(0,0,0,0.6)';
+    compositeCtx.fillRect(W - 200, 10, 190, 32);
+    compositeCtx.fillStyle = '#ea4335';
+    compositeCtx.font = 'bold 15px Tahoma';
+    compositeCtx.textAlign = 'right';
+    compositeCtx.fillText('🔴 ' + fmtTime(Math.floor((Date.now() - recordingStartTime) / 1000)), W - 15, 32);
+    compositeAnimationId = requestAnimationFrame(drawCompositeLoop);
+}
+
+function startRecTimer() {
+    const tt = document.getElementById('recordingTimer');
+    recordingTimerInterval = setInterval(() => {
+        tt.textContent = fmtTime(Math.floor((Date.now() - recordingStartTime) / 1000));
+    }, 1000);
+}
+function stopRecTimer() {
+    if (recordingTimerInterval) clearInterval(recordingTimerInterval);
+    recordingTimerInterval = null;
+    const tt = document.getElementById('recordingTimer');
+    if (tt) tt.textContent = '00:00';
+}
+
+let fakeTimerInterval = null, fakeTimerStart = 0;
+function startFakeRecTimer() {
+    stopFakeRecTimer();
+    fakeTimerStart = Date.now();
+    const tt = document.getElementById('recordingTimer');
+    fakeTimerInterval = setInterval(() => {
+        if (tt) tt.textContent = fmtTime(Math.floor((Date.now() - fakeTimerStart) / 1000));
+    }, 1000);
+}
+function stopFakeRecTimer() {
+    if (fakeTimerInterval) clearInterval(fakeTimerInterval);
+    fakeTimerInterval = null;
+}
+
+function downloadRecording() {
+    if (!recordingBlob) return;
+    const ext = recordingMimeType.includes('mp4') ? 'mp4' : 'webm';
+    const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const u = URL.createObjectURL(recordingBlob);
+    const a = document.createElement('a');
+    a.href = u;
+    a.download = `Lroom-${roomId}-${ts}.${ext}`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(u), 5000);
+    closeModal('recordingModal');
+    recordingBlob = null;
+}
+function discardRecording() {
+    recordingBlob = null;
+    recordedChunks = [];
+    closeModal('recordingModal');
+}
+
 function initWhiteboard() {
     wbCanvas = document.getElementById('whiteboardCanvas');
     if (!wbCanvas) return;
@@ -5218,9 +5148,7 @@ function resizeWhiteboardCanvas() {
     if (wbStrokes.length > 0) redrawAllStrokes();
 }
 
-let wbInitialized = false;
 function openWhiteboard(s) {
-    if (!wbInitialized) { initWhiteboard(); wbInitialized = true; }
     document.getElementById('whiteboardModal').classList.add('open');
     setTimeout(() => {
         resizeWhiteboardCanvas();
@@ -5416,9 +5344,7 @@ function updateProjectorToolsVisibility() {
     });
 }
 
-let projectorInitialized = false;
 function openProjector(s) {
-    if (!projectorInitialized) { initProjector(); projectorInitialized = true; }
     document.getElementById('projectorModal').classList.add('open');
     setTimeout(() => {
         resizeProjectorCanvas();
@@ -5611,6 +5537,7 @@ function copyLink() {
 
 async function leaveMeeting(s) {
     if (!s && !confirm('خروج از جلسه؟')) return;
+    if (isRecording) stopRecording();
 
     if (vadInterval) { clearInterval(vadInterval); vadInterval = null; }
     if (classTimerInterval) { clearInterval(classTimerInterval); classTimerInterval = null; }
@@ -5618,8 +5545,6 @@ async function leaveMeeting(s) {
     if (qualityCheckInterval) { clearInterval(qualityCheckInterval); qualityCheckInterval = null; }
     if (waitingAudioBlockInterval) { clearInterval(waitingAudioBlockInterval); waitingAudioBlockInterval = null; }
     if (connectBarTimer) { clearInterval(connectBarTimer); connectBarTimer = null; }
-    stopStudentApprovalPolling();
-    if (teacherWaitingTimer) { clearInterval(teacherWaitingTimer); teacherWaitingTimer = null; }
 
     hideConnectCountdown();
     hidePermissionModal();
@@ -5629,15 +5554,7 @@ async function leaveMeeting(s) {
 
     const e = attendanceLog.get(myId);
     if (e) e.leftAt = new Date();
-    if (myRole === 'teacher' && roomChannel) broadcast({ type: 'room-closed', name: myName });
-    else broadcast({ type: 'bye', name: myName });
-    await new Promise(resolve => setTimeout(resolve, 180));
-    for (const peerId of Array.from(p2pPeers.keys())) closeP2PPeer(peerId);
-    p2pRemoteAudio.forEach(audio => { try { audio.pause(); audio.srcObject = null; audio.remove(); } catch(e) {} });
-    p2pRemoteAudio.clear(); p2pRemoteScreenStreamIds.clear();
-    if (localP2PScreenStream) localP2PScreenStream.getTracks().forEach(t => { try { t.stop(); } catch(e) {} });
-    localP2PScreenStream = null;
-    mediaTransportMode = 'p2p'; p2pFallbackReason = ''; updateMediaTransportBadge();
+    broadcast({ type: 'bye', name: myName });
 
     if (localStream) {
         localStream.getTracks().forEach(t => { try { t.stop(); } catch(err) {} });
@@ -5646,26 +5563,8 @@ async function leaveMeeting(s) {
     const pv = document.getElementById('previewVideo');
     if (pv) pv.srcObject = null;
 
-    try {
-        if (roomChannel) {
-            await roomChannel.untrack();
-            await sb.removeChannel(roomChannel);
-        }
-    } catch (err) {}
-    roomChannel = null;
-    try {
-        if (roomId && myId && currentUser) {
-            if (myRole === 'teacher') {
-                await sb.from('lroom_rooms').update({ is_active: false, updated_at: new Date().toISOString() })
-                    .eq('room_code', roomId).eq('owner_id', currentUser.id);
-                await sb.from('lroom_room_members').delete().eq('room_code', roomId);
-            } else {
-                await sb.from('lroom_room_members').delete().eq('room_code', roomId).eq('client_id', myId).eq('user_id', currentUser.id);
-            }
-        }
-    } catch (cleanupError) { console.warn('[Lroom P2P] membership cleanup', cleanupError); }
-    p2pRoomRoster.clear();
-    teacherId = '';
+    try { if (livekitRoom) await livekitRoom.disconnect(); } catch (err) {}
+    livekitRoom = null;
 
     isWaitingForApproval = false;
     isMicOn = false; isCamOn = false; isSharing = false; isHandRaised = false;
@@ -5679,7 +5578,7 @@ async function leaveMeeting(s) {
     projCurrentMedia = null; projStrokes = []; projCurrentStroke = null;
     wbStrokes = []; wbCurrentStroke = null;
     lastAutoApplied = '';
-    spotlightedId = null; spotlightModeActive = false;
+    spotlightedId = null; spotlightModeActive = false; isBlurEnabled = false;
     stats.userStats.clear(); stats.startTime = 0;
     qualityCache.clear();
     sharedFiles.length = 0;
@@ -5691,31 +5590,26 @@ async function leaveMeeting(s) {
         const el = document.getElementById(id);
         if (el) el.classList.remove('open');
     });
-    ['whiteboardModal','projectorModal','screenShareModal','giftCodeModal','profileModal','kickModal','activityTimerModal','announceModal','permissionRequestModal'].forEach(id => {
+    ['whiteboardModal','projectorModal','screenShareModal','giftCodeModal','profileModal','kickModal','recordingModal','activityTimerModal','announceModal','permissionRequestModal'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.remove('open');
     });
     document.getElementById('waitingRoomOverlay').style.display = 'none';
     document.getElementById('meeting').classList.remove('active');
     document.getElementById('videos').innerHTML = '';
+    document.getElementById('lobby').style.display = 'flex';
     const joinInput = document.getElementById('joinRoomCode');
     if (joinInput) joinInput.value = '';
     const jb = document.getElementById('joinBtn');
     if (jb) { jb.disabled = false; jb.textContent = (I18N[currentLang] && I18N[currentLang].joinMeeting) || 'ورود به جلسه'; }
-    if (isGuestMode) {
-        document.getElementById('lobby').style.display = 'none';
-        showGuestJoinScreen(roomId);
-    } else {
-        document.getElementById('lobby').style.display = 'flex';
-        setLobbyRole('teacher');
-    }
+    updateAdminButtons();
+    setLobbyRole('teacher');
 }
 
 window.addEventListener('beforeunload', () => {
-    try { if (roomChannel) { void roomChannel.untrack(); void sb.removeChannel(roomChannel); } } catch (e) {}
-    for (const peerId of Array.from(p2pPeers.keys())) closeP2PPeer(peerId);
-    if (localP2PScreenStream) localP2PScreenStream.getTracks().forEach(track => { try { track.stop(); } catch (e) {} });
+    try { if (livekitRoom) livekitRoom.disconnect(); } catch (e) {}
     if (localStream) localStream.getTracks().forEach(t => t.stop());
+    if (isRecording) try { mediaRecorder.stop(); } catch (e) {}
 });
 
 document.addEventListener('keydown', e => {
@@ -5726,6 +5620,8 @@ document.addEventListener('keydown', e => {
         if (pj && pj.classList.contains('open')) closeProjector();
         const ss = document.getElementById('screenShareModal');
         if (ss && ss.classList.contains('open')) closeScreenShareModal();
+        const ap = document.getElementById('adminPanelModal');
+        if (ap && ap.classList.contains('open')) closeAdminPanel();
         const gc = document.getElementById('giftCodeModal');
         if (gc && gc.classList.contains('open')) closeModal('giftCodeModal');
     }
@@ -5735,7 +5631,7 @@ setInterval(() => {
     if (currentUser && !isGuestMode && currentUser.role !== 'admin') {
         const end = parseDateSafe(currentUser.subscriptionEnd);
         if (end && end.getTime() < Date.now()) {
-            if (roomChannel) {
+            if (livekitRoom) {
                 leaveMeeting(true);
                 showToast('⛔ اعتبار شما در حین استفاده تمام شد.');
             }
@@ -5744,38 +5640,101 @@ setInterval(() => {
     }
 }, 30000);
 
-
-
-// Called by the auth bootstrap only after a valid authenticated session is available.
-window.initLroomClassUI = function initLroomClassUI() {
-    if (window.__lroomClassUIInitialized) return;
-    window.__lroomClassUIInitialized = true;
+window.addEventListener('DOMContentLoaded', async () => {
+    if (!navigator.onLine) {
+        document.body.innerHTML = `<div style="color:white;text-align:center;padding:50px;font-family:Tahoma;background:#202124;height:100vh;">
+            <h1>📡 اینترنت قطع است</h1>
+            <p>لطفاً اتصال اینترنت خود را بررسی کنید.</p>
+        </div>`;
+        return;
+    }
 
     document.body.classList.toggle('light-theme', currentTheme === 'light');
-    const themeIcon = currentTheme === 'light' ? '☀️' : '🌙';
-    const themeButton = document.getElementById('themeToggle');
-    if (themeButton) themeButton.textContent = themeIcon;
-    const meetingThemeButton = document.getElementById('themeToggleMeeting');
-    if (meetingThemeButton) meetingThemeButton.textContent = themeIcon;
+    const i = currentTheme === 'light' ? '☀️' : '🌙';
+    const t1 = document.getElementById('themeToggle');
+    if (t1) t1.textContent = i;
+    const t2 = document.getElementById('themeToggleMeeting');
+    if (t2) t2.textContent = i;
 
-    const deviceMode = lroomStorage.getItem('lroom_device') || 'auto';
-    const deviceSelect = document.getElementById('deviceSelect');
-    if (deviceSelect) deviceSelect.value = deviceMode;
-    changeDevice(deviceMode);
+    const dm = localStorage.getItem('lroom_device') || 'auto';
+    const ds = document.getElementById('deviceSelect');
+    if (ds) ds.value = dm;
+    changeDevice(dm);
 
-    // Whiteboard, projector and emoji data are initialized only on first use.
+    initWhiteboard();
+    initProjector();
+    setupEmojiPicker();
 
-    const savedLanguage = lroomStorage.getItem('lroom_lang') || detectedLocale;
-    const languageSelect = document.getElementById('langSelect');
-    if (languageSelect) languageSelect.value = savedLanguage;
-    try { applyLanguage(savedLanguage); } catch (error) { console.warn('[Lroom language]', error); }
+    const savedLang = localStorage.getItem('lroom_lang') || 'fa';
+    const ls = document.getElementById('langSelect');
+    if (ls) ls.value = savedLang;
+    try { applyLanguage(savedLang); } catch (e) {}
 
-    // Invite URLs are handled by the lightweight name-only screen before authentication.
-    // The student is added to the waiting queue and cannot join the P2P room before approval.
-};
+    const urlParams = new URLSearchParams(location.search);
+    const roomFromUrl = urlParams.get('room');
+    const shouldJoin = urlParams.get('join') === '1';
 
+    try {
+        if (!sb) throw new Error('Supabase init failed');
+        const sessionPromise = sb.auth.getSession();
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout connecting to Supabase')), 10000));
+        const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]);
 
+        if (session && session.user) {
+            let { data: profile } = await sb.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
+            if (!profile) {
+                const endDate = calcEndDateFromNow(DEFAULT_SUBSCRIPTION_DAYS);
+                await sb.from('profiles').insert({
+                    id: session.user.id,
+                    email: session.user.email,
+                    name: session.user.user_metadata?.name || 'User',
+                    role: session.user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase() ? 'admin' : 'user',
+                    subscription_end: endDate.toISOString()
+                });
+                const r2 = await sb.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
+                profile = r2.data;
+            }
+            if (profile) {
+                currentUser = {
+                    id: profile.id, email: profile.email, name: profile.name,
+                    role: profile.role, sessionCode: profile.session_code,
+                    subscriptionEnd: profile.subscription_end
+                };
+                isGuestMode = false;
+                checkAndShow();
+                initRealtime();
+                loadActiveAnnouncement();
 
+                if (roomFromUrl && shouldJoin && profile.role !== 'admin') {
+                    setTimeout(async () => {
+                        const end = parseDateSafe(profile.subscription_end);
+                        const isExpired = end && end.getTime() < Date.now();
+                        if (isExpired) { showToast('⚠️ اعتبار تمام شده'); return; }
+                        selectedLobbyRole = 'student';
+                        setLobbyRole('student');
+                        document.getElementById('joinRoomCode').value = roomFromUrl;
+                        showToast('🚀 در حال ورود...');
+                        try { await joinMeeting(); } catch (e) {}
+                    }, 800);
+                }
+                return;
+            }
+        }
+    } catch (e) {
+        console.error('Init Error:', e);
+        const auth = document.getElementById('authScreen');
+        if (auth) auth.style.display = 'flex';
+        showToast('⚠️ اتصال به سرور کند است یا با خطا مواجه شد.');
+        return;
+    }
+
+    if (roomFromUrl && shouldJoin) {
+        showGuestJoinScreen(roomFromUrl);
+    } else {
+        const auth = document.getElementById('authScreen');
+        if (auth) auth.style.display = 'flex';
+    }
+});
 </script>
 </body>
 </html>
